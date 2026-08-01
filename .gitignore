@@ -1,0 +1,17 @@
+# Flutter/Dart
+**/build/
+**/.dart_tool/
+**/.pub/
+**/.pub-cache/
+**/.flutter-plugins-dependencies
+
+# Environment configuration
+.env
+*.env
+**/.env
+
+# IDE / OS
+.idea/
+*.iml
+.DS_Store
+*.log
