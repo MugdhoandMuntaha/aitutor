@@ -3,9 +3,9 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 class EnvConfig {
   static const String _defaultSupabaseUrl = 'https://yvbwiovtkiewtwylbows.supabase.co';
   static const String _defaultSupabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl2Yndpb3Z0a2lld3R3eWxib3dzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcxNTA2MTcsImV4cCI6MjEwMjcyNjYxN30.ZCaob7sI4ZSB6XVWzjCOmKy1rQE3lm-HyMkyUOUUszk';
-  static const String _defaultGeminiApiKey = 'AQ.Ab8RN6JtTU6rzDpHqwx25JSdWiEbXODZQ-Ffy2Am6diRcr3l1w';
-  static const String _defaultGroqApiKey = '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';
-  static const String _defaultElevenlabsApiKey = 'sk_278d6fdc870357c6512a2a0b977154617ecada8534fd60d4';
+  static const String _defaultGeminiApiKey = '';
+  static const String _defaultGroqApiKey = '';
+  static const String _defaultElevenlabsApiKey = '';
 
   static String get geminiApiKey {
     final val = dotenv.env['GEMINI_API_KEY'];
