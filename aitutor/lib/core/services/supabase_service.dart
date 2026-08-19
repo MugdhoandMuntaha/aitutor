@@ -1,4 +1,6 @@
+import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:uuid/uuid.dart';
 import '../config/env_config.dart';
 import '../../shared/models/course_model.dart';
 import '../../shared/models/document_model.dart';
@@ -7,6 +9,20 @@ import '../../shared/models/chat_message_model.dart';
 
 class SupabaseService {
   static bool _isInitialized = false;
+
+  static String toValidUuid(String rawId) {
+    if (RegExp(r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$').hasMatch(rawId)) {
+      return rawId;
+    }
+    if (rawId == 'c1') return '550e8400-e29b-41d4-a716-446655440001';
+    if (rawId == 'c2') return '550e8400-e29b-41d4-a716-446655440002';
+    if (rawId == 'c3') return '550e8400-e29b-41d4-a716-446655440003';
+    if (rawId == 'd1') return '550e8400-e29b-41d4-a716-446655440011';
+    if (rawId == 'd2') return '550e8400-e29b-41d4-a716-446655440012';
+    if (rawId == 'm1') return '550e8400-e29b-41d4-a716-446655440021';
+    if (rawId == 'u1') return '550e8400-e29b-41d4-a716-446655440000';
+    return const Uuid().v4();
+  }
 
   static Future<void> init() async {
     if (_isInitialized) return;
@@ -19,9 +35,12 @@ class SupabaseService {
           anonKey: anonKey,
         );
         _isInitialized = true;
+        debugPrint("✅ Supabase initialized successfully: $url");
+      } else {
+        debugPrint("⚠️ Supabase credentials empty or invalid URL.");
       }
     } catch (e) {
-      // Offline / initialization fallback
+      debugPrint("❌ Supabase init error: $e");
     }
   }
 
@@ -47,6 +66,7 @@ class SupabaseService {
         masteryScore: json['mastery_score'] ?? 75,
       )).toList();
     } catch (e) {
+      debugPrint("❌ Supabase fetchCourses error: $e");
       return [];
     }
   }
@@ -54,24 +74,28 @@ class SupabaseService {
   static Future<void> saveCourse(CourseModel course) async {
     if (!isReady) return;
     try {
+      final validId = toValidUuid(course.id);
       await client.from('courses').upsert({
-        'id': course.id,
+        'id': validId,
         'title': course.title,
         'code': course.code,
         'semester': course.semester,
         'color_hex': course.colorHex,
       });
+      debugPrint("✅ Saved course $validId to Supabase");
     } catch (e) {
-      // Ignored
+      debugPrint("❌ Supabase saveCourse error: $e");
     }
   }
 
   static Future<void> deleteCourse(String id) async {
     if (!isReady) return;
     try {
-      await client.from('courses').delete().eq('id', id);
+      final validId = toValidUuid(id);
+      await client.from('courses').delete().eq('id', validId);
+      debugPrint("✅ Deleted course $validId from Supabase");
     } catch (e) {
-      // Ignored
+      debugPrint("❌ Supabase deleteCourse error: $e");
     }
   }
 
@@ -94,6 +118,7 @@ class SupabaseService {
         fullContent: json['full_content'],
       )).toList();
     } catch (e) {
+      debugPrint("❌ Supabase fetchDocuments error: $e");
       return [];
     }
   }
@@ -101,26 +126,31 @@ class SupabaseService {
   static Future<void> saveDocument(DocumentModel doc) async {
     if (!isReady) return;
     try {
+      final validId = toValidUuid(doc.id);
+      final validCourseId = toValidUuid(doc.courseId);
       await client.from('documents').upsert({
-        'id': doc.id,
-        'course_id': doc.courseId,
+        'id': validId,
+        'course_id': validCourseId,
         'title': doc.title,
         'file_type': doc.fileType,
         'page_count': doc.pageCount,
         'chunk_count': doc.chunkCount,
         if (doc.fullContent != null) 'full_content': doc.fullContent,
       });
+      debugPrint("✅ Saved document $validId to Supabase");
     } catch (e) {
-      // Ignored
+      debugPrint("❌ Supabase saveDocument error: $e");
     }
   }
 
   static Future<void> deleteDocument(String id) async {
     if (!isReady) return;
     try {
-      await client.from('documents').delete().eq('id', id);
+      final validId = toValidUuid(id);
+      await client.from('documents').delete().eq('id', validId);
+      debugPrint("✅ Deleted document $validId from Supabase");
     } catch (e) {
-      // Ignored
+      debugPrint("❌ Supabase deleteDocument error: $e");
     }
   }
 
@@ -138,17 +168,21 @@ class SupabaseService {
   }) async {
     if (!isReady) return;
     try {
+      final validId = toValidUuid(id);
+      final validDocId = toValidUuid(documentId);
+      final validCourseId = toValidUuid(courseId);
       await client.from('document_chunks').upsert({
-        'id': id,
-        'document_id': documentId,
-        'course_id': courseId,
+        'id': validId,
+        'document_id': validDocId,
+        'course_id': validCourseId,
         'content': content,
         'page_number': pageNumber,
         'chunk_index': chunkIndex,
         if (embedding != null && embedding.isNotEmpty) 'embedding': embedding,
       });
+      debugPrint("✅ Saved chunk $validId to Supabase");
     } catch (e) {
-      // Ignored
+      debugPrint("❌ Supabase saveChunk error: $e");
     }
   }
 
@@ -175,7 +209,7 @@ class SupabaseService {
         );
       }
     } catch (e) {
-      // Ignored
+      debugPrint("❌ Supabase fetchUserProfile error: $e");
     }
     return null;
   }
@@ -183,8 +217,9 @@ class SupabaseService {
   static Future<void> saveUserProfile(UserProfileModel profile) async {
     if (!isReady) return;
     try {
+      final validId = toValidUuid(profile.id);
       await client.from('user_profiles').upsert({
-        'id': profile.id,
+        'id': validId,
         'full_name': profile.fullName,
         'email': profile.email,
         'university': profile.university,
@@ -196,8 +231,9 @@ class SupabaseService {
         'daily_goal_minutes': profile.dailyGoalMinutes,
         'today_study_minutes': profile.todayStudyMinutes,
       });
+      debugPrint("✅ Saved user profile to Supabase");
     } catch (e) {
-      // Ignored
+      debugPrint("❌ Supabase saveUserProfile error: $e");
     }
   }
 
@@ -226,6 +262,7 @@ class SupabaseService {
         );
       }).toList();
     } catch (e) {
+      debugPrint("❌ Supabase fetchChatMessages error: $e");
       return [];
     }
   }
@@ -233,14 +270,16 @@ class SupabaseService {
   static Future<void> saveChatMessage(ChatMessage msg) async {
     if (!isReady) return;
     try {
+      final validId = toValidUuid(msg.id);
       await client.from('chat_messages').upsert({
-        'id': msg.id,
+        'id': validId,
         'role': msg.role,
         'content': msg.text,
         'citations': msg.citations.map((c) => c.toJson()).toList(),
       });
+      debugPrint("✅ Saved chat message $validId to Supabase");
     } catch (e) {
-      // Ignored
+      debugPrint("❌ Supabase saveChatMessage error: $e");
     }
   }
 }

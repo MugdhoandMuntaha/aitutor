@@ -39,7 +39,7 @@ final themeModeProvider = StateProvider<ThemeMode>((ref) => ThemeMode.light);
 class UserProfileNotifier extends StateNotifier<UserProfileModel> {
   UserProfileNotifier() : super(
     UserProfileModel(
-      id: 'u1',
+      id: '550e8400-e29b-41d4-a716-446655440000',
       fullName: 'Junaid',
       email: 'junaid@aitutor.edu',
       university: 'BAUST (Science & Technology)',
@@ -138,7 +138,7 @@ class CoursesNotifier extends StateNotifier<List<CourseModel>> {
 
   static final List<CourseModel> _initialDefaultCourses = [
     CourseModel(
-      id: 'c1',
+      id: '550e8400-e29b-41d4-a716-446655440001',
       title: 'Computer Architecture',
       code: 'CSE-3101',
       semester: 'Fall 2026',
@@ -147,7 +147,7 @@ class CoursesNotifier extends StateNotifier<List<CourseModel>> {
       masteryScore: 82,
     ),
     CourseModel(
-      id: 'c2',
+      id: '550e8400-e29b-41d4-a716-446655440002',
       title: 'Operating Systems',
       code: 'CSE-3103',
       semester: 'Fall 2026',
@@ -156,7 +156,7 @@ class CoursesNotifier extends StateNotifier<List<CourseModel>> {
       masteryScore: 64,
     ),
     CourseModel(
-      id: 'c3',
+      id: '550e8400-e29b-41d4-a716-446655440003',
       title: 'Database Management Systems',
       code: 'CSE-3105',
       semester: 'Fall 2026',
@@ -218,8 +218,8 @@ class DocumentsNotifier extends StateNotifier<List<DocumentModel>> {
   final Ref ref;
   DocumentsNotifier(this.ref) : super([
     DocumentModel(
-      id: 'd1',
-      courseId: 'c1',
+      id: '550e8400-e29b-41d4-a716-446655440011',
+      courseId: '550e8400-e29b-41d4-a716-446655440001',
       title: 'Lecture 05 - CPU Pipelining & Cache.pdf',
       fileType: 'pdf',
       pageCount: 18,
@@ -262,8 +262,8 @@ Locality of Reference:
 """,
     ),
     DocumentModel(
-      id: 'd2',
-      courseId: 'c2',
+      id: '550e8400-e29b-41d4-a716-446655440012',
+      courseId: '550e8400-e29b-41d4-a716-446655440002',
       title: 'OS Lecture 03 - Process Scheduling & Deadlocks.pdf',
       fileType: 'pdf',
       pageCount: 24,
@@ -432,7 +432,7 @@ class ChatNotifier extends StateNotifier<List<ChatMessage>> {
   final Ref ref;
   ChatNotifier(this.ref) : super([
     ChatMessage(
-      id: 'm1',
+      id: '550e8400-e29b-41d4-a716-446655440021',
       role: 'assistant',
       text: "Hello! I am your AI Study Companion. Select a course or ask any question regarding your uploaded lecture notes, textbooks, or slides!",
       timestamp: DateTime.now().subtract(const Duration(minutes: 5)),
