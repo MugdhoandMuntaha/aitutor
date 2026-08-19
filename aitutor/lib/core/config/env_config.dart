@@ -1,8 +1,8 @@
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class EnvConfig {
-  static const String _defaultSupabaseUrl = 'https://yvbwiovtkiewtwylbows.supabase.co';
-  static const String _defaultSupabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl2Yndpb3Z0a2lld3R3eWxib3dzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcxNTA2MTcsImV4cCI6MjEwMjcyNjYxN30.ZCaob7sI4ZSB6XVWzjCOmKy1rQE3lm-HyMkyUOUUszk';
+  static const String _defaultSupabaseUrl = '';
+  static const String _defaultSupabaseAnonKey = '';
   static const String _defaultGeminiApiKey = '';
   static const String _defaultGroqApiKey = '';
   static const String _defaultElevenlabsApiKey = '';
