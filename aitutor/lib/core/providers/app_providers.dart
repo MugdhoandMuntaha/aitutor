@@ -213,15 +213,52 @@ final userProfileProvider = StateNotifierProvider<UserProfileNotifier, UserProfi
 // -------------------------------------------------------------
 // Courses Notifier - Full CRUD
 // -------------------------------------------------------------
+// Courses Notifier - Full Local & Cloud Persistence
+// -------------------------------------------------------------
 class CoursesNotifier extends StateNotifier<List<CourseModel>> {
+  static const String _prefKey = 'local_courses_v1';
+
   CoursesNotifier() : super([]) {
-    _loadFromSupabase();
+    _initCourses();
   }
 
-  Future<void> _loadFromSupabase() async {
-    final remoteCourses = await SupabaseService.fetchCourses();
-    if (remoteCourses.isNotEmpty) {
-      state = remoteCourses;
+  Future<void> _saveToSharedPreferences(List<CourseModel> courses) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final encoded = jsonEncode(courses.map((c) => c.toJson()).toList());
+      await prefs.setString(_prefKey, encoded);
+    } catch (e) {
+      debugPrint("⚠️ Courses SharedPreferences save error: $e");
+    }
+  }
+
+  Future<void> _initCourses() async {
+    List<CourseModel> loaded = [];
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final jsonString = prefs.getString(_prefKey);
+      if (jsonString != null && jsonString.isNotEmpty) {
+        final List<dynamic> list = jsonDecode(jsonString);
+        loaded = list.map((item) => CourseModel.fromJson(item)).toList();
+        state = loaded;
+      }
+    } catch (e) {
+      debugPrint("⚠️ SharedPreferences courses load error: $e");
+    }
+
+    try {
+      final remoteCourses = await SupabaseService.fetchCourses();
+      if (remoteCourses.isNotEmpty) {
+        final Map<String, CourseModel> courseMap = {for (final c in loaded) c.id: c};
+        for (final rc in remoteCourses) {
+          courseMap[rc.id] = rc;
+        }
+        final merged = courseMap.values.toList();
+        state = merged;
+        await _saveToSharedPreferences(merged);
+      }
+    } catch (e) {
+      debugPrint("⚠️ Supabase fetchCourses error: $e");
     }
   }
 
@@ -241,11 +278,13 @@ class CoursesNotifier extends StateNotifier<List<CourseModel>> {
       masteryScore: 0,
     );
     state = [...state, newCourse];
+    _saveToSharedPreferences(state);
     SupabaseService.saveCourse(newCourse);
   }
 
   void updateCourse(CourseModel updatedCourse) {
     state = state.map((c) => c.id == updatedCourse.id ? updatedCourse : c).toList();
+    _saveToSharedPreferences(state);
     SupabaseService.saveCourse(updatedCourse);
   }
 
@@ -267,10 +306,12 @@ class CoursesNotifier extends StateNotifier<List<CourseModel>> {
       }
       return c;
     }).toList();
+    _saveToSharedPreferences(state);
   }
 
   void deleteCourse(String id) {
     state = state.where((c) => c.id != id).toList();
+    _saveToSharedPreferences(state);
     SupabaseService.deleteCourse(id);
   }
 }
@@ -280,23 +321,58 @@ final coursesProvider = StateNotifierProvider<CoursesNotifier, List<CourseModel>
 });
 
 // -------------------------------------------------------------
-// Documents Notifier - Full CRUD
+// Documents Notifier - Full Local & Cloud Persistence
 // -------------------------------------------------------------
 class DocumentsNotifier extends StateNotifier<List<DocumentModel>> {
+  static const String _prefKey = 'local_documents_v1';
   final Ref ref;
+
   DocumentsNotifier(this.ref) : super([]) {
     _initializeIndex();
   }
 
+  Future<void> _saveToSharedPreferences(List<DocumentModel> docs) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final encoded = jsonEncode(docs.map((d) => d.toJson()).toList());
+      await prefs.setString(_prefKey, encoded);
+    } catch (e) {
+      debugPrint("⚠️ Documents SharedPreferences save error: $e");
+    }
+  }
+
   Future<void> _initializeIndex() async {
-    final remoteDocs = await SupabaseService.fetchDocuments();
-    if (remoteDocs.isNotEmpty) {
-      state = remoteDocs;
+    List<DocumentModel> localDocs = [];
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final jsonString = prefs.getString(_prefKey);
+      if (jsonString != null && jsonString.isNotEmpty) {
+        final List<dynamic> list = jsonDecode(jsonString);
+        localDocs = list.map((item) => DocumentModel.fromJson(item)).toList();
+        state = localDocs;
+      }
+    } catch (e) {
+      debugPrint("⚠️ SharedPreferences documents load error: $e");
+    }
+
+    try {
+      final remoteDocs = await SupabaseService.fetchDocuments();
+      if (remoteDocs.isNotEmpty) {
+        final Map<String, DocumentModel> docMap = {for (final d in localDocs) d.id: d};
+        for (final rd in remoteDocs) {
+          docMap[rd.id] = rd;
+        }
+        final merged = docMap.values.toList();
+        state = merged;
+        await _saveToSharedPreferences(merged);
+      }
+    } catch (e) {
+      debugPrint("⚠️ Supabase fetchDocuments error: $e");
     }
 
     final ragEngine = ref.read(ragEngineProvider);
     for (final doc in state) {
-      if (doc.fullContent != null) {
+      if (doc.fullContent != null && doc.fullContent!.isNotEmpty) {
         await ragEngine.processAndChunkDocument(
           documentId: doc.id,
           courseId: doc.courseId,
@@ -340,21 +416,23 @@ class DocumentsNotifier extends StateNotifier<List<DocumentModel>> {
       id: docId,
       courseId: courseId,
       title: title,
-      fileType: title.endsWith('.pdf') ? 'pdf' : 'txt',
+      fileType: title.toLowerCase().endsWith('.pdf') ? 'pdf' : 'txt',
       pageCount: pageCount > 0 ? pageCount : 1,
       chunkCount: chunks.length,
       createdAt: DateTime.now(),
       fullContent: fullText,
     );
 
+    state = [newDoc, ...state];
+    await _saveToSharedPreferences(state);
+
     // Backup full document file payload to Cloudflare R2 10GB free storage
-    await CloudflareR2Service.uploadBytes(
+    CloudflareR2Service.uploadBytes(
       remotePath: 'documents/$docId.txt',
       bytes: Uint8List.fromList(utf8.encode(fullText)),
       contentType: 'text/plain',
     );
 
-    state = [newDoc, ...state];
     SupabaseService.saveDocument(newDoc);
 
     // Save chunks & embeddings to Supabase DB
@@ -413,6 +491,7 @@ class DocumentsNotifier extends StateNotifier<List<DocumentModel>> {
       }
       return d;
     }).toList();
+    _saveToSharedPreferences(state);
   }
 
   void renameDocument({required String id, required String newTitle}) {
@@ -421,6 +500,7 @@ class DocumentsNotifier extends StateNotifier<List<DocumentModel>> {
 
   void deleteDocument(String id) {
     state = state.where((d) => d.id != id).toList();
+    _saveToSharedPreferences(state);
     SupabaseService.deleteDocument(id);
   }
 }

@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:file_picker/file_picker.dart';
@@ -51,25 +52,39 @@ class _DocumentUploadScreenState extends ConsumerState<DocumentUploadScreen> {
       if (files.isNotEmpty) {
         final file = files.first;
         _titleController.text = file.name;
-        _contentController.text = """
+
+        String extractedText = "";
+        if (file.path != null && file.path!.isNotEmpty) {
+          try {
+            final f = File(file.path!);
+            if (await f.exists()) {
+              extractedText = await f.readAsString();
+            }
+          } catch (_) {}
+        }
+
+        if (extractedText.trim().isNotEmpty) {
+          _contentController.text = extractedText;
+        } else {
+          _contentController.text = """
 [Page 1]
 ${file.name} - Study Notes Ingestion
-Topic: ${file.name.replaceAll('.pdf', '')}
+Topic: ${file.name.replaceAll(RegExp(r'\.[a-zA-Z0-9]+$'), '')}
 
 [Page 2]
 Core Concepts:
 1. Overview and Fundamentals
-This document contains university lecture slides and textbook materials.
+This document contains university lecture slides and textbook materials for ${file.name}.
 
-2. Important Formulas and Key Terms
-- Latency & Bandwidth trade-offs
-- Complexity Analysis O(N log N)
+2. Key Formulas & Definitions:
+- Quantitative Analysis & Principles
+- Performance & Optimization Metrics
 
 [Page 3]
-Advanced Topics & Practice Problems:
-- Section 3.1 Pipeline Hazards & Branch Prediction
-- Key definitions for examination revision
+Advanced Topics & Revision Notes:
+- Section Details & Exam Review Problems
 """;
+        }
         _updateDetectedPageCount(_contentController.text);
       }
     } catch (e) {
