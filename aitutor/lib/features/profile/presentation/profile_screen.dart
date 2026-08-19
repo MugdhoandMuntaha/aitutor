@@ -457,12 +457,12 @@ class ProfileScreen extends ConsumerWidget {
               subtitle: const Text("Choose an image file from your device"),
               onTap: () async {
                 Navigator.pop(context);
-                final result = await FilePicker.platform.pickFiles(
+                final files = await FilePicker.pickFiles(
                   type: FileType.custom,
                   allowedExtensions: ['png', 'jpg', 'jpeg', 'webp'],
                 );
-                if (result != null && result.files.single.path != null) {
-                  ref.read(userProfileProvider.notifier).setAvatarPath(result.files.single.path!);
+                if (files.isNotEmpty && files.first.path != null) {
+                  ref.read(userProfileProvider.notifier).setAvatarPath(files.first.path!);
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(content: Text("Profile picture updated successfully!")),
                   );
