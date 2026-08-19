@@ -10,6 +10,8 @@ class StudyPlanScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final tasks = ref.watch(studyTasksProvider);
+    final courses = ref.watch(coursesProvider);
+    final activeCourse = courses.isNotEmpty ? courses.first : null;
 
     final todayTasks = tasks.where((t) => t.dayGroup == 'Today').toList();
     final tomorrowTasks = tasks.where((t) => t.dayGroup == 'Tomorrow').toList();
@@ -48,9 +50,17 @@ class StudyPlanScreen extends ConsumerWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text("Computer Architecture Midterm", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+                        Text(
+                          activeCourse != null ? "${activeCourse.title} Exam Prep" : "AI Adaptive Study Planner",
+                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                        ),
                         const SizedBox(height: 4),
-                        Text("Exam Date: Sept 10, 2026 • 22 Days Remaining", style: TextStyle(color: Colors.white.withOpacity(0.8), fontSize: 12)),
+                        Text(
+                          activeCourse != null
+                              ? "Course Code: ${activeCourse.code} • Active Semester: ${activeCourse.semester}"
+                              : "Add your courses and materials to build a personalized study plan.",
+                          style: TextStyle(color: Colors.white.withOpacity(0.8), fontSize: 12),
+                        ),
                       ],
                     ),
                   ),

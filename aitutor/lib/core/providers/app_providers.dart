@@ -40,15 +40,15 @@ class UserProfileNotifier extends StateNotifier<UserProfileModel> {
   UserProfileNotifier() : super(
     UserProfileModel(
       id: '550e8400-e29b-41d4-a716-446655440000',
-      fullName: 'Junaid',
-      email: 'junaid@aitutor.edu',
-      university: 'BAUST (Science & Technology)',
-      major: 'Computer Science & Engineering',
-      academicYear: '3rd Year (Semester VI)',
+      fullName: 'Student User',
+      email: '',
+      university: '',
+      major: '',
+      academicYear: '',
       avatarPreset: 'scholar',
-      streakDays: 12,
+      streakDays: 0,
       dailyGoalMinutes: 60,
-      todayStudyMinutes: 45,
+      todayStudyMinutes: 0,
     ),
   ) {
     _loadFromSupabase();
@@ -132,48 +132,14 @@ final userProfileProvider = StateNotifierProvider<UserProfileNotifier, UserProfi
 // Courses Notifier - Full CRUD
 // -------------------------------------------------------------
 class CoursesNotifier extends StateNotifier<List<CourseModel>> {
-  CoursesNotifier() : super(_initialDefaultCourses) {
+  CoursesNotifier() : super([]) {
     _loadFromSupabase();
   }
-
-  static final List<CourseModel> _initialDefaultCourses = [
-    CourseModel(
-      id: '550e8400-e29b-41d4-a716-446655440001',
-      title: 'Computer Architecture',
-      code: 'CSE-3101',
-      semester: 'Fall 2026',
-      colorHex: '#6366F1',
-      documentCount: 2,
-      masteryScore: 82,
-    ),
-    CourseModel(
-      id: '550e8400-e29b-41d4-a716-446655440002',
-      title: 'Operating Systems',
-      code: 'CSE-3103',
-      semester: 'Fall 2026',
-      colorHex: '#10B981',
-      documentCount: 1,
-      masteryScore: 64,
-    ),
-    CourseModel(
-      id: '550e8400-e29b-41d4-a716-446655440003',
-      title: 'Database Management Systems',
-      code: 'CSE-3105',
-      semester: 'Fall 2026',
-      colorHex: '#F59E0B',
-      documentCount: 3,
-      masteryScore: 90,
-    ),
-  ];
 
   Future<void> _loadFromSupabase() async {
     final remoteCourses = await SupabaseService.fetchCourses();
     if (remoteCourses.isNotEmpty) {
       state = remoteCourses;
-    } else {
-      for (final c in state) {
-        SupabaseService.saveCourse(c);
-      }
     }
   }
 
@@ -190,7 +156,7 @@ class CoursesNotifier extends StateNotifier<List<CourseModel>> {
       semester: semester,
       colorHex: colorHex,
       documentCount: 0,
-      masteryScore: 50,
+      masteryScore: 0,
     );
     state = [...state, newCourse];
     SupabaseService.saveCourse(newCourse);
@@ -216,74 +182,7 @@ final coursesProvider = StateNotifierProvider<CoursesNotifier, List<CourseModel>
 // -------------------------------------------------------------
 class DocumentsNotifier extends StateNotifier<List<DocumentModel>> {
   final Ref ref;
-  DocumentsNotifier(this.ref) : super([
-    DocumentModel(
-      id: '550e8400-e29b-41d4-a716-446655440011',
-      courseId: '550e8400-e29b-41d4-a716-446655440001',
-      title: 'Lecture 05 - CPU Pipelining & Cache.pdf',
-      fileType: 'pdf',
-      pageCount: 18,
-      chunkCount: 12,
-      createdAt: DateTime.now().subtract(const Duration(days: 2)),
-      fullContent: """
-[Page 1]
-COMPUTER ARCHITECTURE - LECTURE 05
-Topic: CPU Pipelining and Cache Memory Latency
-
-[Page 2]
-1. CPU PIPELINING OVERVIEW
-Pipelining is an implementation technique where multiple instructions are overlapped in execution.
-The pipeline is divided into stages:
-- IF: Instruction Fetch
-- ID: Instruction Decode
-- EX: Execute / Address Calculation
-- MEM: Memory Access
-- WB: Write Back
-
-[Page 3]
-Pipeline Hazards:
-1. Structural Hazards: Resource conflicts when hardware cannot support all pipeline combinations.
-2. Data Hazards: When an instruction depends on the result of a previous instruction still in the pipeline.
-3. Control Hazards: Caused by branch instructions that delay the next instruction fetch.
-
-[Page 4]
-2. CACHE MEMORY HIERARCHY
-Cache memory is a small, high-speed memory located near the CPU that minimizes access latency by storing frequently used instructions and data.
-Access latency comparison:
-- Register: < 1 ns
-- L1 Cache: 1-2 ns (SRAM)
-- L2 Cache: 3-5 ns
-- Main Memory (RAM): 50-100 ns (DRAM)
-
-[Page 5]
-Locality of Reference:
-- Temporal Locality: If an item is referenced, it will tend to be referenced again soon.
-- Spatial Locality: If an item is referenced, items with nearby addresses tend to be referenced soon.
-""",
-    ),
-    DocumentModel(
-      id: '550e8400-e29b-41d4-a716-446655440012',
-      courseId: '550e8400-e29b-41d4-a716-446655440002',
-      title: 'OS Lecture 03 - Process Scheduling & Deadlocks.pdf',
-      fileType: 'pdf',
-      pageCount: 24,
-      chunkCount: 15,
-      createdAt: DateTime.now().subtract(const Duration(days: 4)),
-      fullContent: """
-[Page 1]
-OPERATING SYSTEMS - LECTURE 03
-Topic: Process Scheduling and Deadlock Prevention
-
-[Page 2]
-A deadlock is a situation where a set of processes are blocked because each process holds a resource and waits for another resource held by some other process.
-4 Necessary Conditions for Deadlock:
-1. Mutual Exclusion
-2. Hold and Wait
-3. No Preemption
-4. Circular Wait
-""",
-    )
-  ]) {
+  DocumentsNotifier(this.ref) : super([]) {
     _initializeIndex();
   }
 
@@ -291,10 +190,6 @@ A deadlock is a situation where a set of processes are blocked because each proc
     final remoteDocs = await SupabaseService.fetchDocuments();
     if (remoteDocs.isNotEmpty) {
       state = remoteDocs;
-    } else {
-      for (final doc in state) {
-        SupabaseService.saveDocument(doc);
-      }
     }
 
     final ragEngine = ref.read(ragEngineProvider);
@@ -430,14 +325,7 @@ final documentsProvider = StateNotifierProvider<DocumentsNotifier, List<Document
 // -------------------------------------------------------------
 class ChatNotifier extends StateNotifier<List<ChatMessage>> {
   final Ref ref;
-  ChatNotifier(this.ref) : super([
-    ChatMessage(
-      id: '550e8400-e29b-41d4-a716-446655440021',
-      role: 'assistant',
-      text: "Hello! I am your AI Study Companion. Select a course or ask any question regarding your uploaded lecture notes, textbooks, or slides!",
-      timestamp: DateTime.now().subtract(const Duration(minutes: 5)),
-    ),
-  ]) {
+  ChatNotifier(this.ref) : super([]) {
     _loadFromSupabase();
   }
 
@@ -445,10 +333,6 @@ class ChatNotifier extends StateNotifier<List<ChatMessage>> {
     final remoteMsgs = await SupabaseService.fetchChatMessages();
     if (remoteMsgs.isNotEmpty) {
       state = remoteMsgs;
-    } else {
-      for (final m in state) {
-        SupabaseService.saveChatMessage(m);
-      }
     }
   }
 
@@ -518,14 +402,7 @@ class ChatNotifier extends StateNotifier<List<ChatMessage>> {
   }
 
   void clearChat() {
-    final welcomeMsg = ChatMessage(
-      id: const Uuid().v4(),
-      role: 'assistant',
-      text: "Chat cleared! Ask me anything from your study materials.",
-      timestamp: DateTime.now(),
-    );
-    state = [welcomeMsg];
-    SupabaseService.saveChatMessage(welcomeMsg);
+    state = [];
   }
 }
 
@@ -540,24 +417,7 @@ class QuizNotifier extends StateNotifier<List<QuizQuestion>> {
   final Ref ref;
   bool isGenerating = false;
 
-  QuizNotifier(this.ref) : super([
-    QuizQuestion(
-      id: 'q1',
-      question: "Which of the following is a pipeline hazard caused by instruction dependencies?",
-      options: ["Structural Hazard", "Data Hazard", "Control Hazard", "Bus Hazard"],
-      correctIndex: 1,
-      explanation: "Data hazards occur when instructions that exhibit data dependence modify data in different stages of a pipeline.",
-      topic: "CPU Pipelining",
-    ),
-    QuizQuestion(
-      id: 'q2',
-      question: "Why is SRAM used for L1 CPU cache instead of DRAM?",
-      options: ["SRAM is cheaper", "SRAM is faster and does not require refreshing", "SRAM has higher density", "SRAM uses less chip space"],
-      correctIndex: 1,
-      explanation: "SRAM (Static RAM) uses flip-flops and is much faster than DRAM, making it ideal for cache memory.",
-      topic: "Cache Hierarchy",
-    )
-  ]);
+  QuizNotifier(this.ref) : super([]);
 
   Future<void> generateQuizForTopic(String topic) async {
     isGenerating = true;
@@ -606,40 +466,7 @@ final quizProvider = StateNotifierProvider<QuizNotifier, List<QuizQuestion>>((re
 // Study Tasks Notifier - Full CRUD
 // -------------------------------------------------------------
 class StudyTasksNotifier extends StateNotifier<List<StudyTaskModel>> {
-  StudyTasksNotifier() : super([
-    StudyTaskModel(
-      id: 't1',
-      dayGroup: 'Today',
-      courseTitle: 'Computer Architecture',
-      topicSubtitle: 'CPU Pipelining & Hazard Resolution',
-      timeSpan: '07:00 - 08:00 PM',
-      isCompleted: true,
-    ),
-    StudyTaskModel(
-      id: 't2',
-      dayGroup: 'Today',
-      courseTitle: 'Operating Systems',
-      topicSubtitle: 'Deadlock 4 Conditions & Circular Wait',
-      timeSpan: '08:15 - 09:00 PM',
-      isCompleted: false,
-    ),
-    StudyTaskModel(
-      id: 't3',
-      dayGroup: 'Today',
-      courseTitle: 'Revision Quiz',
-      topicSubtitle: '5 Questions on Pipeline Data Hazards',
-      timeSpan: '09:15 - 09:45 PM',
-      isCompleted: false,
-    ),
-    StudyTaskModel(
-      id: 't4',
-      dayGroup: 'Tomorrow',
-      courseTitle: 'Database Systems',
-      topicSubtitle: 'SQL JOIN Optimization & B-Trees',
-      timeSpan: '07:00 - 08:00 PM',
-      isCompleted: false,
-    ),
-  ]);
+  StudyTasksNotifier() : super([]);
 
   void addTask({
     required String dayGroup,

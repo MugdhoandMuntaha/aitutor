@@ -23,6 +23,12 @@ class _QuizScreenState extends ConsumerState<QuizScreen> {
   Widget build(BuildContext context) {
     final questions = ref.watch(quizProvider);
     final quizNotifier = ref.watch(quizProvider.notifier);
+    final selectedCourse = ref.watch(selectedCourseProvider);
+    final courses = ref.watch(coursesProvider);
+    final documents = ref.watch(documentsProvider);
+
+    String quizTopic = selectedCourse?.title ??
+        (courses.isNotEmpty ? courses.first.title : (documents.isNotEmpty ? documents.first.title : "Course Materials"));
 
     if (_currentIndex >= questions.length && questions.isNotEmpty) {
       _currentIndex = questions.length - 1;
@@ -80,7 +86,7 @@ class _QuizScreenState extends ConsumerState<QuizScreen> {
                     children: [
                       ElevatedButton(
                         onPressed: () {
-                          ref.read(quizProvider.notifier).generateQuizForTopic("CPU Pipelining & Cache");
+                          ref.read(quizProvider.notifier).generateQuizForTopic(quizTopic);
                           setState(() {
                             _currentIndex = 0;
                             _score = 0;
@@ -130,7 +136,7 @@ class _QuizScreenState extends ConsumerState<QuizScreen> {
                         children: [
                           ElevatedButton.icon(
                             onPressed: () {
-                              ref.read(quizProvider.notifier).generateQuizForTopic("CPU Pipelining & Cache");
+                              ref.read(quizProvider.notifier).generateQuizForTopic(quizTopic);
                             },
                             icon: const Icon(Icons.auto_awesome),
                             label: const Text("Generate AI Quiz"),

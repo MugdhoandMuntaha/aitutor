@@ -196,16 +196,16 @@ class SupabaseService {
       if (response != null) {
         return UserProfileModel(
           id: response['id'].toString(),
-          fullName: response['full_name'] ?? 'Junaid',
-          email: response['email'] ?? 'junaid@aitutor.edu',
-          university: response['university'] ?? 'BAUST (Science & Technology)',
-          major: response['major'] ?? 'Computer Science & Engineering',
-          academicYear: response['academic_year'] ?? '3rd Year (Semester VI)',
+          fullName: response['full_name'] ?? 'Student User',
+          email: response['email'] ?? '',
+          university: response['university'] ?? '',
+          major: response['major'] ?? '',
+          academicYear: response['academic_year'] ?? '',
           avatarPath: response['avatar_url'],
           avatarPreset: response['avatar_preset'] ?? 'scholar',
-          streakDays: response['streak_days'] ?? 12,
+          streakDays: response['streak_days'] ?? 0,
           dailyGoalMinutes: response['daily_goal_minutes'] ?? 60,
-          todayStudyMinutes: response['today_study_minutes'] ?? 45,
+          todayStudyMinutes: response['today_study_minutes'] ?? 0,
         );
       }
     } catch (e) {
