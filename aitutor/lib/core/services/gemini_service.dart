@@ -205,7 +205,7 @@ $modeInstruction$memoriesSection
 INSTRUCTIONS:
 1. Provide a clear, thorough academic response to the student's question.
 2. Ground your explanation primarily in the RETRIEVED ACADEMIC CONTEXT provided by the user. If the retrieved context is partial or incomplete, supplement with your full academic knowledge to give a complete answer.
-3. MATHEMATICAL & ARCHITECTURAL EQUATIONS: Present equations and formulas in clean, readable math notation (e.g., `CPI = (Total Cycles) / (Instruction Count)` or `CPI = Σ(Instruction Count_i × CPI_i) / (Total Instruction Count)`). Do NOT output unparsed raw LaTeX strings like `\\[ \\text{...} \\]`.
+3. MATHEMATICAL EQUATIONS: Always format equations on separate lines using LaTeX double dollar syntax like: \$\$\\text{CPI} = \\frac{\\text{Total CPU Clock Cycles}}{\\text{Number of Instructions Executed}}\$\$. Use standard LaTeX \\frac{num}{den}, \\sum, \\times, _{subscript} and \\text{...} so equations render in LaTeX equation boxes.
 4. Citing sources: If context is available, cite in-line as [Doc: <Title>, Page: <Number>].
 5. Output MUST be raw JSON object with keys "answer" (markdown string) and "citations" (array of objects with documentTitle, pageNumber, snippet).
 """;
@@ -309,31 +309,39 @@ ${chunks.map((c) => "**From ${c.documentTitle} (Page ${c.pageNumber})**:\n${c.co
     }
 
     if (lowerQ.contains('formula') || lowerQ.contains('architecture') || lowerQ.contains('cpi') || lowerQ.contains('ips') || lowerQ.contains('amdahl') || lowerQ.contains('pipeline')) {
-      return """
-### Core Computer Architecture Formulas 💻⚡
+      return r"""
+### Core Computer Architecture & CPI Formulas 💻⚡
 
-#### 1. CPU Performance Equation
-> **CPU Execution Time** = `Instruction Count (IC) × CPI × Clock Cycle Time`  
-> **CPU Execution Time** = `(Instruction Count × CPI) / Clock Rate (Hz)`
+In **Computer Organization & Architecture (COA)**, CPI (Cycles Per Instruction) is:
 
-#### 2. Clock Cycles per Instruction (CPI) & IPC
-> **CPI** = `(Total CPU Clock Cycles) / (Instruction Count)`  
-> **IPC** = `1 / CPI`
+$$\text{CPI} = \frac{\text{Total CPU Clock Cycles}}{\text{Number of Instructions Executed}}$$
 
-#### 3. MIPS (Millions of Instructions Per Second)
-> **MIPS** = `Instruction Count / (Execution Time × 10⁶)` = `Clock Rate (MHz) / CPI`
+If different instructions have different CPIs:
 
-#### 4. Amdahl's Law (Speedup Calculation)
-> **Speedup (overall)** = `1 / [ (1 - f) + (f / S) ]`  
-> • **f** = Fraction of execution time enhanced  
-> • **S** = Speedup factor of the enhanced portion
+$$\text{Average CPI} = \frac{\sum(\text{Instruction Count}_i \times \text{CPI}_i)}{\text{Total Instruction Count}}$$
 
-#### 5. Pipelining Performance & Ideal Speedup
-> **Speedup (pipeline)** = `Time (unpipelined) / Time (pipelined)` = `(k × n) / (k + n - 1)`  
-> *(Where **k** = pipeline stages, **n** = instruction count. As **n → ∞**, Speedup **≈ k**)*
+Or, using instruction percentages:
 
-#### 6. Average Memory Access Time (AMAT)
-> **AMAT** = `Hit Time (L1) + [ Miss Rate (L1) × Miss Penalty (L1) ]`
+$$\text{Average CPI} = \sum(\text{Instruction Fraction}_i \times \text{CPI}_i)$$
+
+#### Additional Performance Metrics
+
+**1. CPU Execution Time**
+$$\text{CPU Execution Time} = \frac{\text{Instruction Count} \times \text{CPI}}{\text{Clock Rate (Hz)}}$$
+
+**2. MIPS (Millions of Instructions Per Second)**
+$$\text{MIPS} = \frac{\text{Instruction Count}}{\text{Execution Time} \times 10^6} = \frac{\text{Clock Rate (MHz)}}{\text{CPI}}$$
+
+**3. Amdahl's Law (Speedup Calculation)**
+$$\text{Speedup}_{\text{overall}} = \frac{1}{(1 - f) + \frac{f}{S}}$$
+
+- **f** = Fraction of execution time that is enhanced
+- **S** = Speedup factor of the enhanced portion
+
+**4. Pipelining Performance & Ideal Speedup**
+$$\text{Speedup}_{\text{pipeline}} = \frac{\text{Time}_{\text{unpipelined}}}{\text{Time}_{\text{pipelined}}} = \frac{k \times n}{k + n - 1}$$
+
+*(Where **k** = number of pipeline stages, **n** = number of instructions. As **n → ∞**, Speedup **≈ k**)*
 """;
     }
 

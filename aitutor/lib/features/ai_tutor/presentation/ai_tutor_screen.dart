@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_markdown/flutter_markdown.dart';
+import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
+import 'package:flutter_math_fork/flutter_math.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 import '../../../core/theme/app_theme.dart';
 import '../../../core/providers/app_providers.dart';
@@ -384,24 +385,7 @@ class _AITutorScreenState extends ConsumerState<AITutorScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              MarkdownBody(
-                data: _formatLatexEquations(msg.text),
-                selectable: true,
-                styleSheet: MarkdownStyleSheet.fromTheme(Theme.of(context)).copyWith(
-                  p: TextStyle(color: textColor, fontSize: 14, height: 1.5),
-                  h1: TextStyle(color: textColor, fontSize: 18, fontWeight: FontWeight.bold),
-                  h2: TextStyle(color: textColor, fontSize: 16, fontWeight: FontWeight.bold),
-                  h3: TextStyle(color: textColor, fontSize: 15, fontWeight: FontWeight.bold),
-                  listBullet: TextStyle(color: textColor),
-                  tableHead: TextStyle(fontWeight: FontWeight.bold, color: textColor, fontSize: 13),
-                  tableBody: TextStyle(color: textColor, fontSize: 13),
-                  tableBorder: TableBorder.all(
-                    color: Theme.of(context).dividerColor,
-                    width: 1,
-                  ),
-                  tableCellsPadding: const EdgeInsets.all(8),
-                ),
-              ),
+              _buildFormattedMessageContent(context, msg.text, textColor),
 
               const SizedBox(height: 8),
 
@@ -526,82 +510,141 @@ class _AITutorScreenState extends ConsumerState<AITutorScreen> {
     );
   }
 
-  String _formatLatexEquations(String raw) {
-    if (raw.isEmpty) return raw;
-    String text = raw;
+  Widget _buildFormattedMessageContent(BuildContext context, String rawText, Color textColor) {
+    final RegExp blockEqRegex = RegExp(r'(\$\$[\s\S]*?\$\$|\\\[[\s\S]*?\\\])');
+    final matches = blockEqRegex.allMatches(rawText);
 
-    // Clean any literal $1 regex artifacts from prior replacements
-    text = text.replaceAll(r'$1', '');
-
-    // 1. Convert block equations \[ ... \] and $$ ... $$ into formatted quote blocks
-    text = text.replaceAllMapped(RegExp(r'\\\[(.*?)\\\]', dotAll: true), (m) {
-      final content = m.group(1)?.trim() ?? '';
-      return '\n\n> **Equation:** `${_cleanMathExpression(content)}`  \n\n';
-    });
-
-    text = text.replaceAllMapped(RegExp(r'\$\$(.*?)\$\$', dotAll: true), (m) {
-      final content = m.group(1)?.trim() ?? '';
-      return '\n\n> **Equation:** `${_cleanMathExpression(content)}`  \n\n';
-    });
-
-    // 2. Convert inline equations \( ... \) and $ ... $
-    text = text.replaceAllMapped(RegExp(r'\\\((.*?)\\\)', dotAll: true), (m) {
-      final content = m.group(1)?.trim() ?? '';
-      return ' **${_cleanMathExpression(content)}** ';
-    });
-
-    return _cleanMathExpression(text);
-  }
-
-  String _cleanMathExpression(String str) {
-    String s = str;
-
-    // Remove any $1 artifacts
-    s = s.replaceAll(r'$1', '');
-
-    // Convert \frac{num}{den} recursively
-    int safety = 0;
-    while (s.contains(r'\frac') && safety < 10) {
-      s = s.replaceAllMapped(RegExp(r'\\frac\s*\{([^{}]+)\}\s*\{([^{}]+)\}'), (m) {
-        final num = _cleanMathExpression(m.group(1)!);
-        final den = _cleanMathExpression(m.group(2)!);
-        return '($num) / ($den)';
-      });
-      safety++;
+    if (matches.isEmpty) {
+      return _buildMarkdownSegment(context, rawText, textColor);
     }
 
-    // Strip \text{...} -> ...
-    s = s.replaceAllMapped(RegExp(r'\\text\s*\{([^}]+)\}'), (m) => m.group(1) ?? '');
+    final List<Widget> children = [];
+    int lastIndex = 0;
 
-    // Subscript braces like _{overall} -> (overall)
-    s = s.replaceAllMapped(RegExp(r'_\{([^}]+)\}'), (m) => ' (${m.group(1)})');
+    for (final match in matches) {
+      if (match.start > lastIndex) {
+        final textSegment = rawText.substring(lastIndex, match.start);
+        if (textSegment.trim().isNotEmpty) {
+          children.add(_buildMarkdownSegment(context, textSegment, textColor));
+        }
+      }
 
-    // Subscripts and superscripts
-    s = s.replaceAll(r'10^6', '10⁶');
-    s = s.replaceAll(r'10^9', '10⁹');
-    s = s.replaceAll(r'10^3', '10³');
+      String eqRaw = match.group(0)!;
+      String texCode = eqRaw;
+      if (texCode.startsWith(r'$$') && texCode.endsWith(r'$$')) {
+        texCode = texCode.substring(2, texCode.length - 2).trim();
+      } else if (texCode.startsWith(r'\[') && texCode.endsWith(r'\]')) {
+        texCode = texCode.substring(2, texCode.length - 2).trim();
+      }
 
-    // Math Operators & Greek Letters
-    s = s.replaceAll(r'\times', '×');
-    s = s.replaceAll(r'\cdot', '·');
-    s = s.replaceAll(r'\sum_{i}', 'Σᵢ');
-    s = s.replaceAll(r'\sum_{k}', 'Σₖ');
-    s = s.replaceAll(r'\sum', 'Σ');
+      // Clean $1 artifacts if any exist
+      texCode = texCode.replaceAll(r'$1', '');
+
+      children.add(
+        Container(
+          width: double.infinity,
+          alignment: Alignment.center,
+          margin: const EdgeInsets.symmetric(vertical: 10),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          decoration: BoxDecoration(
+            color: Colors.black.withValues(alpha: 0.35),
+            borderRadius: BorderRadius.circular(6),
+            border: Border.all(
+              color: Colors.white,
+              width: 1.2,
+            ),
+          ),
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            physics: const BouncingScrollPhysics(),
+            child: Math.tex(
+              texCode,
+              textStyle: const TextStyle(
+                color: Colors.white,
+                fontSize: 16,
+              ),
+              onErrorFallback: (err) {
+                return Text(
+                  texCode,
+                  style: const TextStyle(color: Colors.white, fontFamily: 'monospace', fontSize: 13),
+                );
+              },
+            ),
+          ),
+        ),
+      );
+
+      lastIndex = match.end;
+    }
+
+    if (lastIndex < rawText.length) {
+      final remaining = rawText.substring(lastIndex);
+      if (remaining.trim().isNotEmpty) {
+        children.add(_buildMarkdownSegment(context, remaining, textColor));
+      }
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: children,
+    );
+  }
+
+  Widget _buildMarkdownSegment(BuildContext context, String text, Color textColor) {
+    final cleanedText = _cleanInlineMath(text);
+    return MarkdownBody(
+      data: cleanedText,
+      selectable: true,
+      styleSheet: MarkdownStyleSheet.fromTheme(Theme.of(context)).copyWith(
+        p: TextStyle(color: textColor, fontSize: 14, height: 1.5),
+        h1: TextStyle(color: textColor, fontSize: 18, fontWeight: FontWeight.bold),
+        h2: TextStyle(color: textColor, fontSize: 16, fontWeight: FontWeight.bold),
+        h3: TextStyle(color: textColor, fontSize: 15, fontWeight: FontWeight.bold),
+        listBullet: TextStyle(color: textColor),
+        tableHead: TextStyle(fontWeight: FontWeight.bold, color: textColor, fontSize: 13),
+        tableBody: TextStyle(color: textColor, fontSize: 13),
+        tableBorder: TableBorder.all(
+          color: Theme.of(context).dividerColor,
+          width: 1,
+        ),
+        tableCellsPadding: const EdgeInsets.all(8),
+      ),
+    );
+  }
+
+  String _cleanInlineMath(String text) {
+    if (text.isEmpty) return text;
+    String s = text;
+
+    // Convert single inline dollar math $eq$ into bold/clean notation
+    s = s.replaceAllMapped(RegExp(r'\$([^$\n]+)\$'), (m) {
+      String eq = m.group(1)?.trim() ?? '';
+      return '**${_cleanSimpleMath(eq)}**';
+    });
+
+    // Convert \(eq\) into bold/clean notation
+    s = s.replaceAllMapped(RegExp(r'\\\((.*?)\\\)'), (m) {
+      String eq = m.group(1)?.trim() ?? '';
+      return '**${_cleanSimpleMath(eq)}**';
+    });
+
+    return s;
+  }
+
+  String _cleanSimpleMath(String eq) {
+    String s = eq;
     s = s.replaceAll(r'\to', '→');
     s = s.replaceAll(r'\rightarrow', '→');
     s = s.replaceAll(r'\approx', '≈');
     s = s.replaceAll(r'\infty', '∞');
+    s = s.replaceAll(r'\times', '×');
+    s = s.replaceAll(r'\cdot', '·');
     s = s.replaceAll(r'\le', '≤');
     s = s.replaceAll(r'\ge', '≥');
     s = s.replaceAll(r'\neq', '≠');
     s = s.replaceAll(r'\_', '_');
-
-    // Safely remove command backslashes without creating $1 literal strings
+    s = s.replaceAllMapped(RegExp(r'\\text\s*\{([^}]+)\}'), (m) => m.group(1) ?? '');
     s = s.replaceAllMapped(RegExp(r'\\([a-zA-Z]+)'), (m) => m.group(1) ?? '');
-
-    // Clean leftover braces
-    s = s.replaceAll('{', '').replaceAll('}', '');
-
-    return s.trim();
+    return s.replaceAll('{', '').replaceAll('}', '').trim();
   }
 }
