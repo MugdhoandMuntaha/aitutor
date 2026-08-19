@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
+import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 import '../../../core/theme/app_theme.dart';
 import '../../../core/providers/app_providers.dart';
