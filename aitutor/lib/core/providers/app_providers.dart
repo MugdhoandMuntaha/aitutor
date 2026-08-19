@@ -1,5 +1,8 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:uuid/uuid.dart';
 
 import '../services/gemini_service.dart';
@@ -51,13 +54,68 @@ class UserProfileNotifier extends StateNotifier<UserProfileModel> {
       todayStudyMinutes: 0,
     ),
   ) {
-    _loadFromSupabase();
+    _loadProfile();
   }
 
-  Future<void> _loadFromSupabase() async {
-    final remote = await SupabaseService.fetchUserProfile();
-    if (remote != null) {
-      state = remote;
+  Future<void> _loadProfile() async {
+    // 1. Load from local SharedPreferences for instant responsiveness & offline resilience
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final localPath = prefs.getString('profile_avatar_path');
+      final localPreset = prefs.getString('profile_avatar_preset');
+      final localName = prefs.getString('profile_full_name');
+      final localEmail = prefs.getString('profile_email');
+      final localUni = prefs.getString('profile_university');
+      final localMajor = prefs.getString('profile_major');
+      final localYear = prefs.getString('profile_academic_year');
+
+      if (localName != null || localPath != null || localPreset != null) {
+        state = state.copyWith(
+          fullName: localName ?? state.fullName,
+          email: localEmail ?? state.email,
+          university: localUni ?? state.university,
+          major: localMajor ?? state.major,
+          academicYear: localYear ?? state.academicYear,
+          avatarPath: localPath,
+          avatarPreset: localPreset ?? state.avatarPreset,
+        );
+      }
+    } catch (e) {
+      debugPrint("⚠️ SharedPreferences profile load error: $e");
+    }
+
+    // 2. Fetch from Supabase remote database & merge
+    try {
+      final remote = await SupabaseService.fetchUserProfile();
+      if (remote != null) {
+        String? mergedPath = remote.avatarPath;
+        if (state.avatarPath != null && File(state.avatarPath!).existsSync()) {
+          mergedPath = state.avatarPath;
+        }
+        state = remote.copyWith(avatarPath: mergedPath);
+        _saveToSharedPreferences(state);
+      }
+    } catch (e) {
+      debugPrint("⚠️ Supabase profile sync error: $e");
+    }
+  }
+
+  Future<void> _saveToSharedPreferences(UserProfileModel profile) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      if (profile.avatarPath != null && profile.avatarPath!.isNotEmpty) {
+        await prefs.setString('profile_avatar_path', profile.avatarPath!);
+      } else {
+        await prefs.remove('profile_avatar_path');
+      }
+      await prefs.setString('profile_avatar_preset', profile.avatarPreset);
+      await prefs.setString('profile_full_name', profile.fullName);
+      await prefs.setString('profile_email', profile.email);
+      await prefs.setString('profile_university', profile.university);
+      await prefs.setString('profile_major', profile.major);
+      await prefs.setString('profile_academic_year', profile.academicYear);
+    } catch (e) {
+      debugPrint("⚠️ SharedPreferences save error: $e");
     }
   }
 
@@ -81,27 +139,44 @@ class UserProfileNotifier extends StateNotifier<UserProfileModel> {
       avatarPreset: avatarPreset,
       dailyGoalMinutes: dailyGoalMinutes,
     );
+    _saveToSharedPreferences(state);
     SupabaseService.saveUserProfile(state);
   }
 
-  void setAvatarPath(String path) {
-    state = UserProfileModel(
-      id: state.id,
-      fullName: state.fullName,
-      email: state.email,
-      university: state.university,
-      major: state.major,
-      academicYear: state.academicYear,
-      avatarPath: path,
-      avatarPreset: state.avatarPreset,
-      streakDays: state.streakDays,
-      dailyGoalMinutes: state.dailyGoalMinutes,
-      todayStudyMinutes: state.todayStudyMinutes,
-    );
-    SupabaseService.saveUserProfile(state);
+  Future<void> setAvatarPath(String sourcePath) async {
+    try {
+      final appDocDir = await getApplicationDocumentsDirectory();
+      final ext = sourcePath.contains('.') ? sourcePath.split('.').last : 'png';
+      final savedFile = File('${appDocDir.path}/profile_avatar.$ext');
+      final sourceFile = File(sourcePath);
+
+      if (await sourceFile.exists()) {
+        await sourceFile.copy(savedFile.path);
+        final persistentPath = savedFile.path;
+
+        state = UserProfileModel(
+          id: state.id,
+          fullName: state.fullName,
+          email: state.email,
+          university: state.university,
+          major: state.major,
+          academicYear: state.academicYear,
+          avatarPath: persistentPath,
+          avatarPreset: state.avatarPreset,
+          streakDays: state.streakDays,
+          dailyGoalMinutes: state.dailyGoalMinutes,
+          todayStudyMinutes: state.todayStudyMinutes,
+        );
+
+        await _saveToSharedPreferences(state);
+        await SupabaseService.saveUserProfile(state);
+      }
+    } catch (e) {
+      debugPrint("❌ Error persisting avatar path: $e");
+    }
   }
 
-  void setAvatarPreset(String preset) {
+  Future<void> setAvatarPreset(String preset) async {
     state = UserProfileModel(
       id: state.id,
       fullName: state.fullName,
@@ -115,11 +190,13 @@ class UserProfileNotifier extends StateNotifier<UserProfileModel> {
       dailyGoalMinutes: state.dailyGoalMinutes,
       todayStudyMinutes: state.todayStudyMinutes,
     );
-    SupabaseService.saveUserProfile(state);
+    await _saveToSharedPreferences(state);
+    await SupabaseService.saveUserProfile(state);
   }
 
   void incrementStudyTime(int minutes) {
     state = state.copyWith(todayStudyMinutes: state.todayStudyMinutes + minutes);
+    _saveToSharedPreferences(state);
     SupabaseService.saveUserProfile(state);
   }
 }
