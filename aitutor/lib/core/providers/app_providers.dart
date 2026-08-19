@@ -1,4 +1,6 @@
+import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -9,9 +11,12 @@ import '../services/gemini_service.dart';
 import '../services/rag_engine.dart';
 import '../services/elevenlabs_service.dart';
 import '../services/supabase_service.dart';
+import '../services/r2_storage_service.dart';
 import '../../shared/models/course_model.dart';
 import '../../shared/models/document_model.dart';
 import '../../shared/models/chat_message_model.dart';
+import '../../shared/models/chat_session_model.dart';
+import '../../shared/models/ai_memory_model.dart';
 import '../../shared/models/quiz_model.dart';
 import '../../shared/models/user_profile_model.dart';
 import '../../shared/models/study_task_model.dart';
@@ -89,8 +94,11 @@ class UserProfileNotifier extends StateNotifier<UserProfileModel> {
       final remote = await SupabaseService.fetchUserProfile();
       if (remote != null) {
         String? mergedPath = remote.avatarPath;
-        if (state.avatarPath != null && File(state.avatarPath!).existsSync()) {
-          mergedPath = state.avatarPath;
+        if (state.avatarPath != null && state.avatarPath!.isNotEmpty) {
+          final isUrl = state.avatarPath!.startsWith('http://') || state.avatarPath!.startsWith('https://');
+          if (isUrl || File(state.avatarPath!).existsSync()) {
+            mergedPath = state.avatarPath;
+          }
         }
         state = remote.copyWith(avatarPath: mergedPath);
         _saveToSharedPreferences(state);
@@ -154,18 +162,15 @@ class UserProfileNotifier extends StateNotifier<UserProfileModel> {
         await sourceFile.copy(savedFile.path);
         final persistentPath = savedFile.path;
 
-        state = UserProfileModel(
-          id: state.id,
-          fullName: state.fullName,
-          email: state.email,
-          university: state.university,
-          major: state.major,
-          academicYear: state.academicYear,
+        // Try R2 upload in background
+        CloudflareR2Service.uploadFile(
+          remotePath: 'avatars/profile_${state.id}.$ext',
+          file: savedFile,
+          contentType: 'image/$ext',
+        );
+
+        state = state.copyWith(
           avatarPath: persistentPath,
-          avatarPreset: state.avatarPreset,
-          streakDays: state.streakDays,
-          dailyGoalMinutes: state.dailyGoalMinutes,
-          todayStudyMinutes: state.todayStudyMinutes,
         );
 
         await _saveToSharedPreferences(state);
@@ -242,6 +247,26 @@ class CoursesNotifier extends StateNotifier<List<CourseModel>> {
   void updateCourse(CourseModel updatedCourse) {
     state = state.map((c) => c.id == updatedCourse.id ? updatedCourse : c).toList();
     SupabaseService.saveCourse(updatedCourse);
+  }
+
+  void updateMasteryScore(String courseId, int score) {
+    final clampedScore = score.clamp(0, 100);
+    state = state.map((c) {
+      if (c.id == courseId) {
+        final updated = CourseModel(
+          id: c.id,
+          title: c.title,
+          code: c.code,
+          semester: c.semester,
+          colorHex: c.colorHex,
+          documentCount: c.documentCount,
+          masteryScore: clampedScore,
+        );
+        SupabaseService.saveCourse(updated);
+        return updated;
+      }
+      return c;
+    }).toList();
   }
 
   void deleteCourse(String id) {
@@ -322,6 +347,13 @@ class DocumentsNotifier extends StateNotifier<List<DocumentModel>> {
       fullContent: fullText,
     );
 
+    // Backup full document file payload to Cloudflare R2 10GB free storage
+    await CloudflareR2Service.uploadBytes(
+      remotePath: 'documents/$docId.txt',
+      bytes: Uint8List.fromList(utf8.encode(fullText)),
+      contentType: 'text/plain',
+    );
+
     state = [newDoc, ...state];
     SupabaseService.saveDocument(newDoc);
 
@@ -398,6 +430,100 @@ final documentsProvider = StateNotifierProvider<DocumentsNotifier, List<Document
 });
 
 // -------------------------------------------------------------
+// ChatGPT / Gemini Style AI Memories Notifier
+// -------------------------------------------------------------
+class AIMemoriesNotifier extends StateNotifier<List<AIMemoryModel>> {
+  AIMemoriesNotifier() : super([]) {
+    _loadMemories();
+  }
+
+  Future<void> _loadMemories() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final jsonStr = prefs.getString('ai_tutor_memories');
+      if (jsonStr != null && jsonStr.isNotEmpty) {
+        final List<dynamic> list = jsonDecode(jsonStr);
+        state = list.map((e) => AIMemoryModel.fromJson(e as Map<String, dynamic>)).toList();
+      } else {
+        // Initial default memory items to showcase ChatGPT/Gemini style memory feature
+        state = [
+          AIMemoryModel(
+            id: 'm-1',
+            content: 'Student prefers clear, structured explanations with bullet points and code/math examples.',
+            category: 'preference',
+            isEnabled: true,
+            createdAt: DateTime.now(),
+          ),
+          AIMemoryModel(
+            id: 'm-2',
+            content: 'Always provide real-world academic analogies when explaining abstract theoretical concepts.',
+            category: 'preference',
+            isEnabled: true,
+            createdAt: DateTime.now(),
+          ),
+        ];
+        _saveMemories();
+      }
+    } catch (e) {
+      debugPrint("⚠️ AIMemories load error: $e");
+    }
+  }
+
+  Future<void> _saveMemories() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final jsonStr = jsonEncode(state.map((m) => m.toJson()).toList());
+      await prefs.setString('ai_tutor_memories', jsonStr);
+    } catch (e) {
+      debugPrint("⚠️ AIMemories save error: $e");
+    }
+  }
+
+  void addMemory(String content, {String category = 'preference'}) {
+    if (content.trim().isEmpty) return;
+    final newMemory = AIMemoryModel(
+      id: const Uuid().v4(),
+      content: content.trim(),
+      category: category,
+      isEnabled: true,
+      createdAt: DateTime.now(),
+    );
+    state = [newMemory, ...state];
+    _saveMemories();
+  }
+
+  void toggleMemory(String id) {
+    state = state.map((m) => m.id == id ? m.copyWith(isEnabled: !m.isEnabled) : m).toList();
+    _saveMemories();
+  }
+
+  void editMemory(String id, String newContent) {
+    state = state.map((m) => m.id == id ? m.copyWith(content: newContent.trim()) : m).toList();
+    _saveMemories();
+  }
+
+  void deleteMemory(String id) {
+    state = state.where((m) => m.id != id).toList();
+    _saveMemories();
+  }
+
+  String getMemoriesSystemPrompt() {
+    final active = state.where((m) => m.isEnabled).toList();
+    if (active.isEmpty) return "";
+    final buffer = StringBuffer();
+    buffer.writeln("STORED USER MEMORIES & PREFERENCES (REMEMBER & STRICTLY ADHERE TO):");
+    for (int i = 0; i < active.length; i++) {
+      buffer.writeln("${i + 1}. ${active[i].content}");
+    }
+    return buffer.toString();
+  }
+}
+
+final aiMemoriesProvider = StateNotifierProvider<AIMemoriesNotifier, List<AIMemoryModel>>((ref) {
+  return AIMemoriesNotifier();
+});
+
+// -------------------------------------------------------------
 // Chat Messages Notifier
 // -------------------------------------------------------------
 class ChatNotifier extends StateNotifier<List<ChatMessage>> {
@@ -411,6 +537,10 @@ class ChatNotifier extends StateNotifier<List<ChatMessage>> {
     if (remoteMsgs.isNotEmpty) {
       state = remoteMsgs;
     }
+  }
+
+  void setMessages(List<ChatMessage> messages) {
+    state = messages;
   }
 
   bool isLoading = false;
@@ -427,6 +557,8 @@ class ChatNotifier extends StateNotifier<List<ChatMessage>> {
 
     state = [...state, userMsg];
     SupabaseService.saveChatMessage(userMsg);
+    ref.read(userProfileProvider.notifier).incrementStudyTime(2);
+    ref.read(chatSessionsProvider.notifier).updateCurrentSessionMessages(state);
     isLoading = true;
 
     try {
@@ -436,6 +568,7 @@ class ChatNotifier extends StateNotifier<List<ChatMessage>> {
       final geminiService = ref.read(geminiServiceProvider);
       final elevenLabs = ref.read(elevenLabsServiceProvider);
       final isVoiceEnabled = ref.read(isVoiceEnabledProvider);
+      final memoriesPrompt = ref.read(aiMemoriesProvider.notifier).getMemoriesSystemPrompt();
 
       final relevantChunks = await ragEngine.retrieveRelevantChunks(
         query: question,
@@ -448,6 +581,7 @@ class ChatNotifier extends StateNotifier<List<ChatMessage>> {
         chunks: relevantChunks,
         tutorMode: tutorMode,
         chatHistory: state,
+        userMemoriesPrompt: memoriesPrompt,
       );
 
       final assistantMsg = ChatMessage(
@@ -460,6 +594,7 @@ class ChatNotifier extends StateNotifier<List<ChatMessage>> {
 
       state = [...state, assistantMsg];
       SupabaseService.saveChatMessage(assistantMsg);
+      ref.read(chatSessionsProvider.notifier).updateCurrentSessionMessages(state);
 
       if (isVoiceEnabled) {
         await elevenLabs.speak(ragResponse.answer);
@@ -473,6 +608,7 @@ class ChatNotifier extends StateNotifier<List<ChatMessage>> {
       );
       state = [...state, errorMsg];
       SupabaseService.saveChatMessage(errorMsg);
+      ref.read(chatSessionsProvider.notifier).updateCurrentSessionMessages(state);
     } finally {
       isLoading = false;
     }
@@ -480,11 +616,142 @@ class ChatNotifier extends StateNotifier<List<ChatMessage>> {
 
   void clearChat() {
     state = [];
+    ref.read(chatSessionsProvider.notifier).updateCurrentSessionMessages(state);
   }
 }
 
 final chatProvider = StateNotifierProvider<ChatNotifier, List<ChatMessage>>((ref) {
   return ChatNotifier(ref);
+});
+
+// -------------------------------------------------------------
+// ChatGPT / Gemini Style Multi-Chat Sessions Notifier
+// -------------------------------------------------------------
+class ChatSessionsNotifier extends StateNotifier<List<ChatSessionModel>> {
+  final Ref ref;
+  String? activeSessionId;
+
+  ChatSessionsNotifier(this.ref) : super([]) {
+    _loadSessions();
+  }
+
+  Future<void> _loadSessions() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final jsonStr = prefs.getString('ai_tutor_chat_sessions');
+      if (jsonStr != null && jsonStr.isNotEmpty) {
+        final List<dynamic> list = jsonDecode(jsonStr);
+        final loaded = list.map((e) => ChatSessionModel.fromJson(e as Map<String, dynamic>)).toList();
+        if (loaded.isNotEmpty) {
+          state = loaded;
+          activeSessionId = prefs.getString('ai_tutor_active_session_id') ?? loaded.first.id;
+          final currentSession = state.firstWhere((s) => s.id == activeSessionId, orElse: () => loaded.first);
+          ref.read(chatProvider.notifier).setMessages(currentSession.messages);
+          return;
+        }
+      }
+    } catch (e) {
+      debugPrint("⚠️ ChatSessions load error: $e");
+    }
+
+    // Default initial session
+    createNewSession(title: "Welcome to AI Tutor 👋");
+  }
+
+  Future<void> _saveSessions() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final jsonStr = jsonEncode(state.map((s) => s.toJson()).toList());
+      await prefs.setString('ai_tutor_chat_sessions', jsonStr);
+      if (activeSessionId != null) {
+        await prefs.setString('ai_tutor_active_session_id', activeSessionId!);
+      }
+    } catch (e) {
+      debugPrint("⚠️ ChatSessions save error: $e");
+    }
+  }
+
+  ChatSessionModel? get activeSession {
+    if (activeSessionId == null) return null;
+    return state.firstWhere((s) => s.id == activeSessionId, orElse: () => state.first);
+  }
+
+  void createNewSession({String title = "New Chat", String? courseId}) {
+    final newId = const Uuid().v4();
+    final newSession = ChatSessionModel(
+      id: newId,
+      title: title,
+      createdAt: DateTime.now(),
+      updatedAt: DateTime.now(),
+      messages: [
+        ChatMessage(
+          id: const Uuid().v4(),
+          role: 'assistant',
+          text: "Hello! I am your AI Academic Tutor grounded in your course materials and memories. How can I assist your study session today?",
+          timestamp: DateTime.now(),
+        ),
+      ],
+      courseId: courseId,
+    );
+
+    state = [newSession, ...state];
+    activeSessionId = newId;
+    ref.read(chatProvider.notifier).setMessages(newSession.messages);
+    _saveSessions();
+  }
+
+  void switchSession(String sessionId) {
+    final sessionIndex = state.indexWhere((s) => s.id == sessionId);
+    if (sessionIndex != -1) {
+      activeSessionId = sessionId;
+      ref.read(chatProvider.notifier).setMessages(state[sessionIndex].messages);
+      _saveSessions();
+    }
+  }
+
+  void updateCurrentSessionMessages(List<ChatMessage> messages) {
+    if (activeSessionId == null) return;
+    
+    String sessionTitle = activeSession?.title ?? "New Chat";
+    if ((sessionTitle == "New Chat" || sessionTitle == "Welcome to AI Tutor 👋") && messages.any((m) => m.isUser)) {
+      final firstUserMsg = messages.firstWhere((m) => m.isUser).text;
+      sessionTitle = firstUserMsg.length > 28 ? "${firstUserMsg.substring(0, 28)}..." : firstUserMsg;
+    }
+
+    state = state.map((s) {
+      if (s.id == activeSessionId) {
+        return s.copyWith(
+          title: sessionTitle,
+          messages: messages,
+          updatedAt: DateTime.now(),
+        );
+      }
+      return s;
+    }).toList();
+    _saveSessions();
+  }
+
+  void renameSession(String id, String newTitle) {
+    state = state.map((s) => s.id == id ? s.copyWith(title: newTitle) : s).toList();
+    _saveSessions();
+  }
+
+  void deleteSession(String id) {
+    state = state.where((s) => s.id != id).toList();
+    if (activeSessionId == id) {
+      if (state.isNotEmpty) {
+        switchSession(state.first.id);
+      } else {
+        createNewSession();
+      }
+    } else {
+      _saveSessions();
+    }
+  }
+}
+
+final chatSessionsProvider = StateNotifierProvider<ChatSessionsNotifier, List<ChatSessionModel>>((ref) {
+  return ChatSessionsNotifier(ref);
 });
 
 // -------------------------------------------------------------

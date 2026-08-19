@@ -13,6 +13,8 @@ import 'features/flashcards/presentation/flashcards_screen.dart';
 import 'features/study_plan/presentation/study_plan_screen.dart';
 import 'features/profile/presentation/profile_screen.dart';
 
+import 'shared/widgets/glass_container.dart';
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await EnvConfig.init();
@@ -43,7 +45,6 @@ class AIStudyCompanionApp extends ConsumerWidget {
   }
 }
 
-
 class MainNavigationScaffold extends StatefulWidget {
   const MainNavigationScaffold({super.key});
 
@@ -56,6 +57,8 @@ class _MainNavigationScaffoldState extends State<MainNavigationScaffold> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     final List<Widget> screens = [
       DashboardScreen(onNavigateTab: (index) => setState(() => _currentIndex = index)),
       const CoursesScreen(),
@@ -65,40 +68,155 @@ class _MainNavigationScaffoldState extends State<MainNavigationScaffold> {
     ];
 
     return Scaffold(
-      body: IndexedStack(
-        index: _currentIndex,
-        children: screens,
-      ),
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: _currentIndex,
-        onDestinationSelected: (index) => setState(() => _currentIndex = index),
-        destinations: const [
-          NavigationDestination(
-            icon: Icon(Icons.dashboard_outlined),
-            selectedIcon: Icon(Icons.dashboard, color: AppTheme.primaryIndigo),
-            label: 'Home',
+      extendBody: true,
+      body: Stack(
+        children: [
+          // Ambient Mesh Gradient Background with 3 glow orbs
+          Positioned.fill(
+            child: Container(
+              decoration: BoxDecoration(
+                color: isDark ? AppTheme.darkBackground : AppTheme.lightBackground,
+              ),
+              child: Stack(
+                children: [
+                  // Indigo orb — top right
+                  Positioned(
+                    top: -80,
+                    right: -80,
+                    child: Container(
+                      width: 320,
+                      height: 320,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: AppTheme.primaryIndigo.withValues(alpha: isDark ? 0.22 : 0.10),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppTheme.primaryIndigo.withValues(alpha: isDark ? 0.28 : 0.14),
+                            blurRadius: 120,
+                            spreadRadius: 30,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  // Cyan orb — bottom left
+                  Positioned(
+                    bottom: 120,
+                    left: -60,
+                    child: Container(
+                      width: 280,
+                      height: 280,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: AppTheme.accentCyan.withValues(alpha: isDark ? 0.18 : 0.08),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppTheme.accentCyan.withValues(alpha: isDark ? 0.22 : 0.10),
+                            blurRadius: 100,
+                            spreadRadius: 25,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  // Purple orb — center right (new)
+                  Positioned(
+                    top: MediaQuery.of(context).size.height * 0.4,
+                    right: -40,
+                    child: Container(
+                      width: 200,
+                      height: 200,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: AppTheme.accentPurple.withValues(alpha: isDark ? 0.14 : 0.06),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppTheme.accentPurple.withValues(alpha: isDark ? 0.18 : 0.08),
+                            blurRadius: 80,
+                            spreadRadius: 15,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
-          NavigationDestination(
-            icon: Icon(Icons.folder_outlined),
-            selectedIcon: Icon(Icons.folder, color: AppTheme.primaryIndigo),
-            label: 'Courses',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.psychology_outlined),
-            selectedIcon: Icon(Icons.psychology, color: AppTheme.primaryIndigo),
-            label: 'AI Tutor',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.quiz_outlined),
-            selectedIcon: Icon(Icons.quiz, color: AppTheme.primaryIndigo),
-            label: 'Quizzes',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.person_outline),
-            selectedIcon: Icon(Icons.person, color: AppTheme.primaryIndigo),
-            label: 'Profile',
+
+          // Main Screen Content Stack
+          IndexedStack(
+            index: _currentIndex,
+            children: screens,
           ),
         ],
+      ),
+
+      // Floating Glass Bottom Navigation Bar
+      bottomNavigationBar: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+          child: GlassContainer(
+            borderRadius: 32,
+            blur: 28,
+            opacityColor: isDark ? const Color(0xFF0F1629) : Colors.white,
+            opacity: isDark ? 0.78 : 0.92,
+            borderColor: isDark
+                ? AppTheme.primaryIndigo.withValues(alpha: 0.25)
+                : Colors.white.withValues(alpha: 0.85),
+            borderWidth: 1.5,
+            boxShadow: [
+              BoxShadow(
+                color: AppTheme.primaryIndigo.withValues(alpha: isDark ? 0.20 : 0.12),
+                blurRadius: 24,
+                spreadRadius: -4,
+                offset: const Offset(0, 8),
+              ),
+              BoxShadow(
+                color: AppTheme.accentCyan.withValues(alpha: isDark ? 0.08 : 0.05),
+                blurRadius: 40,
+                spreadRadius: 0,
+                offset: const Offset(0, 4),
+              ),
+            ],
+            padding: const EdgeInsets.symmetric(vertical: 6),
+            child: NavigationBar(
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              indicatorColor: AppTheme.primaryIndigo.withValues(alpha: 0.18),
+              labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
+              selectedIndex: _currentIndex,
+              onDestinationSelected: (index) => setState(() => _currentIndex = index),
+              destinations: [
+                NavigationDestination(
+                  icon: Icon(Icons.dashboard_outlined, color: isDark ? Colors.white54 : Colors.black45),
+                  selectedIcon: const Icon(Icons.dashboard_rounded, color: AppTheme.primaryIndigo),
+                  label: 'Home',
+                ),
+                NavigationDestination(
+                  icon: Icon(Icons.folder_outlined, color: isDark ? Colors.white54 : Colors.black45),
+                  selectedIcon: const Icon(Icons.folder_rounded, color: AppTheme.accentCyan),
+                  label: 'Courses',
+                ),
+                NavigationDestination(
+                  icon: Icon(Icons.auto_awesome_outlined, color: isDark ? Colors.white54 : Colors.black45),
+                  selectedIcon: const Icon(Icons.auto_awesome, color: AppTheme.accentPurple),
+                  label: 'AI Tutor',
+                ),
+                NavigationDestination(
+                  icon: Icon(Icons.quiz_outlined, color: isDark ? Colors.white54 : Colors.black45),
+                  selectedIcon: const Icon(Icons.quiz_rounded, color: AppTheme.accentAmber),
+                  label: 'Quizzes',
+                ),
+                NavigationDestination(
+                  icon: Icon(Icons.person_outline_rounded, color: isDark ? Colors.white54 : Colors.black45),
+                  selectedIcon: const Icon(Icons.person_rounded, color: AppTheme.accentEmerald),
+                  label: 'Profile',
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }

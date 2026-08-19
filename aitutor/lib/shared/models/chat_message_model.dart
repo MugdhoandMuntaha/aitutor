@@ -38,4 +38,25 @@ class ChatMessage {
   });
 
   bool get isUser => role == 'user';
+
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'role': role,
+    'text': text,
+    'citations': citations.map((c) => c.toJson()).toList(),
+    'timestamp': timestamp.toIso8601String(),
+  };
+
+  factory ChatMessage.fromJson(Map<String, dynamic> json) => ChatMessage(
+    id: json['id'] ?? '',
+    role: json['role'] ?? 'assistant',
+    text: json['text'] ?? json['content'] ?? '',
+    citations: (json['citations'] as List<dynamic>?)
+            ?.map((c) => Citation.fromJson(c as Map<String, dynamic>))
+            .toList() ??
+        [],
+    timestamp: json['timestamp'] != null
+        ? DateTime.parse(json['timestamp'])
+        : (json['created_at'] != null ? DateTime.parse(json['created_at']) : DateTime.now()),
+  );
 }

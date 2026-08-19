@@ -48,31 +48,38 @@ class GeminiService {
 
     messagesList.add({'role': 'user', 'content': userPrompt});
 
-    try {
-      final response = await http.post(
-        Uri.parse('https://api.groq.com/openai/v1/chat/completions'),
-        headers: {
-          'Authorization': 'Bearer $groqKey',
-          'Content-Type': 'application/json',
-        },
-        body: jsonEncode({
-          'model': 'openai/gpt-oss-20b',
-          'response_format': {'type': 'json_object'},
-          'messages': messagesList,
-          'temperature': 0.3,
-          'max_tokens': 1500,
-        }),
-      );
+    final modelsToTry = [
+      'llama-3.3-70b-versatile',
+      'llama-3.1-8b-instant',
+      'mixtral-8x7b-32768',
+    ];
 
-      if (response.statusCode == 200) {
-        final data = jsonDecode(utf8.decode(response.bodyBytes));
-        final content = data['choices']?[0]?['message']?['content'];
-        if (content != null && content.toString().trim().isNotEmpty) {
-          return content.toString();
+    for (final model in modelsToTry) {
+      try {
+        final response = await http.post(
+          Uri.parse('https://api.groq.com/openai/v1/chat/completions'),
+          headers: {
+            'Authorization': 'Bearer $groqKey',
+            'Content-Type': 'application/json',
+          },
+          body: jsonEncode({
+            'model': model,
+            'messages': messagesList,
+            'temperature': 0.3,
+            'max_tokens': 1500,
+          }),
+        );
+
+        if (response.statusCode == 200) {
+          final data = jsonDecode(utf8.decode(response.bodyBytes));
+          final content = data['choices']?[0]?['message']?['content'];
+          if (content != null && content.toString().trim().isNotEmpty) {
+            return content.toString();
+          }
         }
+      } catch (e) {
+        // Try next model
       }
-    } catch (e) {
-      // Groq network issue
     }
     return null;
   }
@@ -165,6 +172,7 @@ class GeminiService {
     required List<RAGChunk> chunks,
     String tutorMode = 'direct', // 'direct', 'socratic', 'beginner', 'exam'
     List<ChatMessage> chatHistory = const [],
+    String userMemoriesPrompt = "",
   }) async {
     final contextBuffer = StringBuffer();
     for (int i = 0; i < chunks.length; i++) {
@@ -186,15 +194,20 @@ class GeminiService {
       modeInstruction = "DIRECT TUTOR MODE: Provide a comprehensive academic explanation, using Markdown formatting, lists, tables, and equations where applicable.";
     }
 
+    final memoriesSection = userMemoriesPrompt.trim().isNotEmpty
+        ? "\n\n$userMemoriesPrompt\n"
+        : "";
+
     final systemPrompt = """
 You are an expert AI Academic Tutor for university students.
-$modeInstruction
+$modeInstruction$memoriesSection
 
 INSTRUCTIONS:
 1. Provide a clear, thorough academic response to the student's question.
 2. Ground your explanation primarily in the RETRIEVED ACADEMIC CONTEXT provided by the user. If the retrieved context is partial or incomplete, supplement with your full academic knowledge to give a complete answer.
-3. Citing sources: If context is available, cite in-line as [Doc: <Title>, Page: <Number>].
-4. Output MUST be raw JSON object with keys "answer" (markdown string) and "citations" (array of objects with documentTitle, pageNumber, snippet).
+3. MATHEMATICAL & ARCHITECTURAL EQUATIONS: Present equations and formulas in clean, readable math notation (e.g., `CPI = (Total Cycles) / (Instruction Count)` or `CPI = Σ(Instruction Count_i × CPI_i) / (Total Instruction Count)`). Do NOT output unparsed raw LaTeX strings like `\\[ \\text{...} \\]`.
+4. Citing sources: If context is available, cite in-line as [Doc: <Title>, Page: <Number>].
+5. Output MUST be raw JSON object with keys "answer" (markdown string) and "citations" (array of objects with documentTitle, pageNumber, snippet).
 """;
 
     final historyBuffer = StringBuffer();
@@ -286,34 +299,67 @@ ${contextBuffer.isEmpty ? "No uploaded course documents were retrieved for this 
 
   String _generateOfflineAcademicAnswer(String question, List<RAGChunk> chunks, String tutorMode) {
     final lowerQ = question.toLowerCase();
-    
-    if (lowerQ.contains('osi') || lowerQ.contains('layer')) {
-      return """
-### OSI 7-Layer Reference Model (Exam Guide)
-
-The **OSI (Open Systems Interconnection) Model** is a 7-layer architectural framework for network communication:
-
-1. **Application Layer (Layer 7)**: Provides network services directly to end-user applications (HTTP, FTP, SMTP, DNS).
-2. **Presentation Layer (Layer 6)**: Data formatting, encryption/decryption, and compression (SSL/TLS, JPEG, ASCII).
-3. **Session Layer (Layer 5)**: Establishes, manages, and terminates application sessions (RPC, NetBIOS).
-4. **Transport Layer (Layer 4)**: End-to-end communication, flow control, error recovery, and port addressing (**TCP**, **UDP**).
-5. **Network Layer (Layer 3)**: Logical IP addressing, packet forwarding, and path routing (**IPv4/v6**, ICMP, BGP).
-6. **Data Link Layer (Layer 2)**: Physical MAC addressing, framing, and media access control (**Ethernet**, Wi-Fi switches).
-7. **Physical Layer (Layer 1)**: Transmission of raw binary bit streams over physical medium (Fiber, Copper cables, Radio).
-
-*Grounded Note*: Ensure you review packet headers and MAC vs IP routing for exam questions!
-""";
-    }
 
     if (chunks.isNotEmpty) {
       return """
-Here is the core summary from your study material regarding **"$question"**:
+### Grounded Course Material Summary
 
 ${chunks.map((c) => "**From ${c.documentTitle} (Page ${c.pageNumber})**:\n${c.content}").join("\n\n")}
 """;
     }
 
-    return "Regarding '$question': Please ensure relevant course notes are uploaded to enable full grounded citations.";
+    if (lowerQ.contains('formula') || lowerQ.contains('architecture') || lowerQ.contains('cpi') || lowerQ.contains('ips') || lowerQ.contains('amdahl') || lowerQ.contains('pipeline')) {
+      return """
+### Core Computer Architecture Formulas 💻⚡
+
+#### 1. CPU Performance Equation
+> **CPU Execution Time** = `Instruction Count (IC) × CPI × Clock Cycle Time`  
+> **CPU Execution Time** = `(Instruction Count × CPI) / Clock Rate (Hz)`
+
+#### 2. Clock Cycles per Instruction (CPI) & IPC
+> **CPI** = `(Total CPU Clock Cycles) / (Instruction Count)`  
+> **IPC** = `1 / CPI`
+
+#### 3. MIPS (Millions of Instructions Per Second)
+> **MIPS** = `Instruction Count / (Execution Time × 10⁶)` = `Clock Rate (MHz) / CPI`
+
+#### 4. Amdahl's Law (Speedup Calculation)
+> **Speedup (overall)** = `1 / [ (1 - f) + (f / S) ]`  
+> • **f** = Fraction of execution time enhanced  
+> • **S** = Speedup factor of the enhanced portion
+
+#### 5. Pipelining Performance & Ideal Speedup
+> **Speedup (pipeline)** = `Time (unpipelined) / Time (pipelined)` = `(k × n) / (k + n - 1)`  
+> *(Where **k** = pipeline stages, **n** = instruction count. As **n → ∞**, Speedup **≈ k**)*
+
+#### 6. Average Memory Access Time (AMAT)
+> **AMAT** = `Hit Time (L1) + [ Miss Rate (L1) × Miss Penalty (L1) ]`
+""";
+    }
+
+    if (lowerQ.contains('osi') || lowerQ.contains('layer') || lowerQ.contains('network')) {
+      return """
+### OSI 7-Layer Reference Model (Exam Summary) 🌐
+
+1. **Layer 7 - Application**: Direct user-network interface (**HTTP, SMTP, FTP, DNS**).
+2. **Layer 6 - Presentation**: Syntax translation, encryption/decryption (**SSL/TLS, ASCII, JPEG**).
+3. **Layer 5 - Session**: Manages and terminates application sessions (**RPC, NetBIOS**).
+4. **Layer 4 - Transport**: End-to-end transport, error control, port addressing (**TCP, UDP**).
+5. **Layer 3 - Network**: Logical IP routing and packet forwarding (**IPv4/IPv6, ICMP, BGP**).
+6. **Layer 2 - Data Link**: Physical MAC addressing, framing (**Ethernet, Wi-Fi 802.11**).
+7. **Layer 1 - Physical**: Raw binary bit stream transmission over physical media (**Cables, Fiber, Radio**).
+""";
+    }
+
+    return """
+### Overview of "$question"
+
+Here is a structured academic summary for **"$question"**:
+
+1. **Key Concept**: This topic forms a foundational element of university computer science curricula.
+2. **Core Components**: Ensure you focus on system constraints, performance trade-offs, and algorithmic efficiency.
+3. **Study Recommendation**: Upload related lecture slides or textbook PDFs in the **Courses** tab for grounded citations and tailored quiz generation!
+""";
   }
 
   /// Generate AI Quiz Questions from course context

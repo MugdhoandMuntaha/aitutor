@@ -5,6 +5,7 @@ import 'package:uuid/uuid.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/providers/app_providers.dart';
 import '../../../shared/models/quiz_model.dart';
+import '../../../shared/widgets/glass_container.dart';
 
 class QuizScreen extends ConsumerStatefulWidget {
   const QuizScreen({super.key});
@@ -34,59 +35,45 @@ class _QuizScreenState extends ConsumerState<QuizScreen> {
       _currentIndex = questions.length - 1;
     }
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text("AI Revision & Quizzes"),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.add_comment_outlined),
-            tooltip: "Add Custom Question",
-            onPressed: () => _showAddQuestionDialog(),
-          ),
-          if (questions.isNotEmpty)
-            IconButton(
-              icon: const Icon(Icons.restart_alt),
-              tooltip: "Reset Quiz Session",
-              onPressed: () {
-                ref.read(quizProvider.notifier).resetQuiz();
-                setState(() {
-                  _currentIndex = 0;
-                  _score = 0;
-                  _selectedOptionIndex = null;
-                  _submitted = false;
-                });
-              },
-            ),
-        ],
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Quiz Setup Banner
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(colors: [Color(0xFFF59E0B), Color(0xFFD97706)]),
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Column(
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 115),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Quiz Setup Banner (Glassmorphic)
+          GlassContainer(
+            borderRadius: 20,
+            blur: 16,
+            opacity: 0.20,
+            gradient: const LinearGradient(colors: [Color(0xFFF59E0B), Color(0xFFD97706)]),
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Expanded(
+                  child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text("Generate AI Quiz", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
                       SizedBox(height: 4),
-                      Text("Generated directly from your uploaded notes", style: TextStyle(color: Colors.white70, fontSize: 12)),
+                      Text("Generated directly from lecture notes", style: TextStyle(color: Colors.white70, fontSize: 12)),
                     ],
                   ),
-                  Row(
-                    children: [
-                      ElevatedButton(
+                ),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.add_comment_outlined, color: Colors.white),
+                      tooltip: "Add Custom Question",
+                      onPressed: () => _showAddQuestionDialog(),
+                    ),
+                    if (questions.isNotEmpty)
+                      IconButton(
+                        icon: const Icon(Icons.restart_alt, color: Colors.white),
+                        tooltip: "Reset Quiz Session",
                         onPressed: () {
-                          ref.read(quizProvider.notifier).generateQuizForTopic(quizTopic);
+                          ref.read(quizProvider.notifier).resetQuiz();
                           setState(() {
                             _currentIndex = 0;
                             _score = 0;
@@ -94,25 +81,39 @@ class _QuizScreenState extends ConsumerState<QuizScreen> {
                             _submitted = false;
                           });
                         },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.white,
-                          foregroundColor: Colors.black,
-                        ),
-                        child: const Text("New AI Quiz"),
                       ),
-                    ],
-                  ),
-                ],
-              ),
+                    ElevatedButton(
+                      onPressed: () {
+                        ref.read(quizProvider.notifier).generateQuizForTopic(quizTopic);
+                        setState(() {
+                          _currentIndex = 0;
+                          _score = 0;
+                          _selectedOptionIndex = null;
+                          _submitted = false;
+                        });
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.white,
+                        foregroundColor: Colors.black,
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      ),
+                      child: const Text("New Quiz"),
+                    ),
+                  ],
+                ),
+              ],
             ),
+          ),
 
-            const SizedBox(height: 20),
+          const SizedBox(height: 16),
 
-            if (quizNotifier.isGenerating)
-              const Center(
+          if (quizNotifier.isGenerating)
+            const Expanded(
+              child: Center(
                 child: Padding(
                   padding: EdgeInsets.all(30.0),
                   child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       CircularProgressIndicator(color: AppTheme.accentAmber),
                       SizedBox(height: 12),
@@ -120,149 +121,164 @@ class _QuizScreenState extends ConsumerState<QuizScreen> {
                     ],
                   ),
                 ),
-              )
-            else if (questions.isEmpty)
-              Expanded(
-                child: Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(Icons.quiz_outlined, size: 64, color: Colors.grey),
-                      const SizedBox(height: 12),
-                      const Text("No active quiz session.", style: TextStyle(fontSize: 16, color: Colors.grey)),
-                      const SizedBox(height: 12),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          ElevatedButton.icon(
-                            onPressed: () {
-                              ref.read(quizProvider.notifier).generateQuizForTopic(quizTopic);
-                            },
-                            icon: const Icon(Icons.auto_awesome),
-                            label: const Text("Generate AI Quiz"),
-                          ),
-                          const SizedBox(width: 10),
-                          OutlinedButton.icon(
-                            onPressed: () => _showAddQuestionDialog(),
-                            icon: const Icon(Icons.add),
-                            label: const Text("Add Custom Question"),
-                          ),
-                        ],
-                      )
-                    ],
-                  ),
+              ),
+            )
+          else if (questions.isEmpty)
+            Expanded(
+              child: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.quiz_outlined, size: 64, color: Colors.grey),
+                    const SizedBox(height: 12),
+                    const Text("No active quiz session.", style: TextStyle(fontSize: 16, color: Colors.grey)),
+                    const SizedBox(height: 16),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        ElevatedButton.icon(
+                          onPressed: () {
+                            ref.read(quizProvider.notifier).generateQuizForTopic(quizTopic);
+                          },
+                          icon: const Icon(Icons.auto_awesome),
+                          label: const Text("Generate AI Quiz"),
+                        ),
+                        const SizedBox(width: 10),
+                        OutlinedButton.icon(
+                          onPressed: () => _showAddQuestionDialog(),
+                          icon: const Icon(Icons.add),
+                          label: const Text("Add Question"),
+                        ),
+                      ],
+                    )
+                  ],
                 ),
-              )
-            else ...[
-              // Question Progress Indicator
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text("Question ${_currentIndex + 1} of ${questions.length}", style: const TextStyle(fontWeight: FontWeight.bold)),
-                  Row(
-                    children: [
-                      Text("Score: $_score", style: const TextStyle(color: AppTheme.accentEmerald, fontWeight: FontWeight.bold)),
-                      const SizedBox(width: 10),
-                      IconButton(
-                        icon: const Icon(Icons.delete_outline, color: Colors.grey, size: 20),
-                        tooltip: "Delete Question",
-                        onPressed: () {
-                          final curId = questions[_currentIndex].id;
-                          ref.read(quizProvider.notifier).deleteQuestion(curId);
-                          setState(() {
-                            if (_currentIndex > 0) _currentIndex--;
-                            _selectedOptionIndex = null;
-                            _submitted = false;
-                          });
-                        },
-                      ),
-                    ],
-                  ),
-                ],
               ),
-              const SizedBox(height: 8),
-              LinearProgressIndicator(
-                value: (_currentIndex + 1) / questions.length,
-                backgroundColor: Colors.white10,
-                color: AppTheme.accentAmber,
-              ),
-
-              const SizedBox(height: 20),
-
-              // Current Question Card
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        questions[_currentIndex].question,
-                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                      ),
-                      const SizedBox(height: 16),
-
-                      // Options
-                      ...List.generate(
-                        questions[_currentIndex].options.length,
-                        (index) => Container(
-                          margin: const EdgeInsets.only(bottom: 10),
-                          child: Material(
-                            color: _getOptionColor(index, questions[_currentIndex].correctIndex),
-                            borderRadius: BorderRadius.circular(12),
-                            child: InkWell(
-                              borderRadius: BorderRadius.circular(12),
-                              onTap: _submitted ? null : () {
+            )
+          else ...[
+            Expanded(
+              child: SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Question Progress Indicator
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text("Question ${_currentIndex + 1} of ${questions.length}", style: const TextStyle(fontWeight: FontWeight.bold)),
+                        Row(
+                          children: [
+                            Text("Score: $_score", style: const TextStyle(color: AppTheme.accentEmerald, fontWeight: FontWeight.bold)),
+                            const SizedBox(width: 10),
+                            IconButton(
+                              icon: const Icon(Icons.delete_outline, color: Colors.grey, size: 20),
+                              tooltip: "Delete Question",
+                              onPressed: () {
+                                final curId = questions[_currentIndex].id;
+                                ref.read(quizProvider.notifier).deleteQuestion(curId);
                                 setState(() {
-                                  _selectedOptionIndex = index;
+                                  if (_currentIndex > 0) _currentIndex--;
+                                  _selectedOptionIndex = null;
+                                  _submitted = false;
                                 });
                               },
-                              child: Container(
-                                padding: const EdgeInsets.all(16),
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(
-                                    color: _selectedOptionIndex == index ? AppTheme.accentAmber : Theme.of(context).dividerColor,
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(4),
+                      child: LinearProgressIndicator(
+                        value: (_currentIndex + 1) / questions.length,
+                        backgroundColor: Colors.white.withValues(alpha: 0.1),
+                        color: AppTheme.accentAmber,
+                        minHeight: 6,
+                      ),
+                    ),
+
+                    const SizedBox(height: 16),
+
+                    // Current Question Glass Card
+                    GlassContainer(
+                      borderRadius: 20,
+                      blur: 16,
+                      opacity: 0.15,
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            questions[_currentIndex].question,
+                            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                          ),
+                          const SizedBox(height: 16),
+
+                          // Options
+                          ...List.generate(
+                            questions[_currentIndex].options.length,
+                            (index) => Container(
+                              margin: const EdgeInsets.only(bottom: 10),
+                              child: Material(
+                                color: _getOptionColor(index, questions[_currentIndex].correctIndex),
+                                borderRadius: BorderRadius.circular(14),
+                                child: InkWell(
+                                  borderRadius: BorderRadius.circular(14),
+                                  onTap: _submitted ? null : () {
+                                    setState(() {
+                                      _selectedOptionIndex = index;
+                                    });
+                                  },
+                                  child: Container(
+                                    padding: const EdgeInsets.all(16),
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(14),
+                                      border: Border.all(
+                                        color: _selectedOptionIndex == index ? AppTheme.accentAmber : Theme.of(context).dividerColor,
+                                      ),
+                                    ),
+                                    child: Text(questions[_currentIndex].options[index], style: const TextStyle(fontSize: 14)),
                                   ),
                                 ),
-                                child: Text(questions[_currentIndex].options[index], style: const TextStyle(fontSize: 14)),
                               ),
                             ),
                           ),
-                        ),
+
+                          if (_submitted) ...[
+                            const SizedBox(height: 12),
+                            Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: Theme.of(context).brightness == Brightness.dark ? Colors.white10 : const Color(0xFFF1F5F9),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text("Explanation:", style: TextStyle(fontWeight: FontWeight.bold, color: AppTheme.accentCyan)),
+                                  const SizedBox(height: 4),
+                                  Text(questions[_currentIndex].explanation, style: const TextStyle(fontSize: 12)),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ],
                       ),
-
-
-                      if (_submitted) ...[
-                        const SizedBox(height: 12),
-                        Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: Theme.of(context).brightness == Brightness.dark ? Colors.white10 : const Color(0xFFF1F5F9),
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text("Explanation:", style: TextStyle(fontWeight: FontWeight.bold, color: AppTheme.accentCyan)),
-                              const SizedBox(height: 4),
-                              Text(questions[_currentIndex].explanation, style: const TextStyle(fontSize: 12)),
-                            ],
-                          ),
-                        ),
-                      ],
-
-                    ],
-                  ),
+                    ),
+                    const SizedBox(height: 12),
+                  ],
                 ),
               ),
+            ),
 
-              const Spacer(),
-
-              // Action Buttons
-              SizedBox(
+            // Action Button
+            Padding(
+              padding: const EdgeInsets.only(top: 8.0, bottom: 4.0),
+              child: SizedBox(
                 width: double.infinity,
-                height: 48,
+                height: 50,
                 child: ElevatedButton(
                   onPressed: _selectedOptionIndex == null
                       ? null
@@ -289,26 +305,30 @@ class _QuizScreenState extends ConsumerState<QuizScreen> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppTheme.accentAmber,
                     foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                   ),
-                  child: Text(_submitted ? (_currentIndex < questions.length - 1 ? "Next Question" : "Finish Quiz") : "Submit Answer"),
+                  child: Text(
+                    _submitted ? (_currentIndex < questions.length - 1 ? "Next Question" : "Finish Quiz") : "Submit Answer",
+                    style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                  ),
                 ),
               ),
-            ],
+            ),
           ],
-        ),
+        ],
       ),
     );
   }
 
   Color _getOptionColor(int optionIndex, int correctIndex) {
     if (!_submitted) {
-      return _selectedOptionIndex == optionIndex ? AppTheme.primaryIndigo.withOpacity(0.3) : Theme.of(context).cardColor;
+      return _selectedOptionIndex == optionIndex ? AppTheme.primaryIndigo.withValues(alpha: 0.3) : Theme.of(context).cardColor;
     }
     if (optionIndex == correctIndex) {
-      return AppTheme.accentEmerald.withOpacity(0.3);
+      return AppTheme.accentEmerald.withValues(alpha: 0.3);
     }
     if (_selectedOptionIndex == optionIndex) {
-      return AppTheme.accentRose.withOpacity(0.3);
+      return AppTheme.accentRose.withValues(alpha: 0.3);
     }
     return Theme.of(context).cardColor;
   }
@@ -357,7 +377,7 @@ class _QuizScreenState extends ConsumerState<QuizScreen> {
                 ),
                 const SizedBox(height: 10),
                 DropdownButtonFormField<int>(
-                  value: correctIndex,
+                  initialValue: correctIndex,
                   decoration: const InputDecoration(labelText: "Correct Option Index"),
                   items: const [
                     DropdownMenuItem(value: 0, child: Text("Option 1 is Correct")),
@@ -414,6 +434,24 @@ class _QuizScreenState extends ConsumerState<QuizScreen> {
   }
 
   void _showResultsDialog() {
+    final questions = ref.read(quizProvider);
+    final totalQ = questions.isEmpty ? 1 : questions.length;
+    final masteryPct = ((_score / totalQ) * 100).round();
+
+    // Dynamically update course mastery score
+    final selectedCourse = ref.read(selectedCourseProvider);
+    if (selectedCourse != null) {
+      ref.read(coursesProvider.notifier).updateMasteryScore(selectedCourse.id, masteryPct);
+    } else {
+      final courses = ref.read(coursesProvider);
+      if (courses.isNotEmpty) {
+        ref.read(coursesProvider.notifier).updateMasteryScore(courses.first.id, masteryPct);
+      }
+    }
+
+    // Increment study time for quiz completion
+    ref.read(userProfileProvider.notifier).incrementStudyTime(5);
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -421,11 +459,14 @@ class _QuizScreenState extends ConsumerState<QuizScreen> {
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text("Your Final Score: $_score / ${ref.read(quizProvider).length}", style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            Text("Your Final Score: $_score / ${questions.length}", style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             const SizedBox(height: 12),
             Text(
-              _score >= 4 ? "Great job! Topic Mastery updated to 88%." : "Recommendation: Review Lecture notes on weak topics.",
+              masteryPct >= 70
+                  ? "Great job! Topic Mastery score updated to $masteryPct%."
+                  : "Topic Mastery score: $masteryPct%. Recommendation: Review lecture notes on weak topics.",
               style: const TextStyle(color: Colors.grey),
+              textAlign: TextAlign.center,
             ),
           ],
         ),
