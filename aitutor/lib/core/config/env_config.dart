@@ -35,6 +35,13 @@ class EnvConfig {
     return _defaultSupabaseAnonKey;
   }
 
+  // Cloudflare R2 Storage Configurations
+  static String get r2AccountId => dotenv.env['CLOUDFLARE_R2_ACCOUNT_ID'] ?? '';
+  static String get r2AccessKeyId => dotenv.env['CLOUDFLARE_R2_ACCESS_KEY_ID'] ?? '';
+  static String get r2SecretAccessKey => dotenv.env['CLOUDFLARE_R2_SECRET_ACCESS_KEY'] ?? '';
+  static String get r2BucketName => dotenv.env['CLOUDFLARE_R2_BUCKET_NAME'] ?? 'aitutor-storage';
+  static String get r2PublicUrl => dotenv.env['CLOUDFLARE_R2_PUBLIC_URL'] ?? '';
+
   static Future<void> init() async {
     try {
       await dotenv.load(fileName: ".env");
@@ -43,4 +50,3 @@ class EnvConfig {
     }
   }
 }
-
