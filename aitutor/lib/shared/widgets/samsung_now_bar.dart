@@ -52,10 +52,10 @@ class _SamsungNowBarState extends ConsumerState<SamsungNowBar> {
                           Container(
                             padding: const EdgeInsets.all(6),
                             decoration: BoxDecoration(
-                              color: AppTheme.accentAmber.withValues(alpha: 0.2),
+                              color: AppTheme.accentCyan.withValues(alpha: 0.2),
                               shape: BoxShape.circle,
                             ),
-                            child: const Icon(Icons.local_fire_department, color: AppTheme.accentAmber, size: 18),
+                            child: const Icon(Icons.timer_outlined, color: AppTheme.accentCyan, size: 18),
                           ),
                           const SizedBox(width: 8),
                           Column(
@@ -65,9 +65,9 @@ class _SamsungNowBarState extends ConsumerState<SamsungNowBar> {
                                 "Samsung Now Bar • Live Activity",
                                 style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Colors.grey),
                               ),
-                              Text(
-                                "🔥 ${profile.streakDays} Days Study Streak!",
-                                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                              const Text(
+                                "Study Dashboard & Goal Tracker",
+                                style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
                               ),
                             ],
                           ),
@@ -158,40 +158,7 @@ class _SamsungNowBarState extends ConsumerState<SamsungNowBar> {
             onTap: () => setState(() => _isExpanded = !_isExpanded),
             child: Row(
               children: [
-                // Live Streak Pill (Always visible!)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFFF59E0B), Color(0xFFEA580C)],
-                    ),
-                    borderRadius: BorderRadius.circular(20),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.orange.withValues(alpha: 0.4),
-                        blurRadius: 8,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(Icons.local_fire_department, color: Colors.white, size: 15),
-                      const SizedBox(width: 4),
-                      Text(
-                        "${profile.streakDays} Days",
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 12,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
 
-                const SizedBox(width: 10),
 
                 // Center Dynamic Activity Text & Mini Progress Ring
                 Expanded(

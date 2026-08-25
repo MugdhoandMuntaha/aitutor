@@ -11,10 +11,10 @@ class GeminiService {
 
   GeminiService() {
     final apiKey = EnvConfig.geminiApiKey;
-    if (apiKey.isNotEmpty && apiKey.startsWith('AIzaSy')) {
+    if (apiKey.isNotEmpty) {
       try {
         _textModel = GenerativeModel(
-          model: 'gemini-2.5-flash',
+          model: 'gemini-1.5-flash',
           apiKey: apiKey,
         );
         _embeddingModel = GenerativeModel(
@@ -49,9 +49,12 @@ class GeminiService {
     messagesList.add({'role': 'user', 'content': userPrompt});
 
     final modelsToTry = [
+      'openai/gpt-oss-20b',
+      'qwen/qwen3.6-27b',
+      'openai/gpt-oss-120b',
+      'groq/compound',
       'llama-3.3-70b-versatile',
       'llama-3.1-8b-instant',
-      'mixtral-8x7b-32768',
     ];
 
     for (final model in modelsToTry) {

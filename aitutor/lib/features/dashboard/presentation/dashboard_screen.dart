@@ -130,33 +130,7 @@ class DashboardScreen extends ConsumerWidget {
                                   ),
                                 ),
 
-                                const SizedBox(width: 8),
 
-                                // 🔥 12 Days Streak Pill Widget (Guaranteed Visible & Scaled for Mobile Screens!)
-                                GlassContainer(
-                                  borderRadius: 20,
-                                  blur: 12,
-                                  opacity: 0.25,
-                                  borderWidth: 1,
-                                  borderColor: Colors.amber.withValues(alpha: 0.5),
-                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                                  onTap: () => onNavigateTab(4),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      const Icon(Icons.local_fire_department, color: Colors.amberAccent, size: 16),
-                                      const SizedBox(width: 4),
-                                      Text(
-                                        "${profile.streakDays} Days",
-                                        style: const TextStyle(
-                                          color: Colors.white,
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 12,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
                               ],
                             ),
 

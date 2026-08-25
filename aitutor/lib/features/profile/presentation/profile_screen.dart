@@ -139,11 +139,11 @@ class ProfileScreen extends ConsumerWidget {
                   children: [
                     _buildGlassMetricTile(
                       context,
-                      icon: Icons.local_fire_department,
+                      icon: Icons.flag,
                       iconColor: AppTheme.accentAmber,
-                      label: "Study Streak",
-                      value: "${profile.streakDays} Days 🔥",
-                      subtitle: "Consecutive Days Active",
+                      label: "Daily Goal",
+                      value: "${profile.dailyGoalMinutes} mins",
+                      subtitle: "Target Study Duration",
                     ),
                     _buildGlassMetricTile(
                       context,
