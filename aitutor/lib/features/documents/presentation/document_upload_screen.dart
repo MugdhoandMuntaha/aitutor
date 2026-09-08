@@ -158,7 +158,7 @@ Advanced Topics & Revision Notes:
             const Text("Course Knowledge Base", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
             const SizedBox(height: 8),
             DropdownButtonFormField<String>(
-              value: currentCourseId,
+              initialValue: currentCourseId,
               decoration: const InputDecoration(
                 hintText: "Select Course",
               ),
