@@ -133,13 +133,15 @@ class AppTheme {
     ),
     chipTheme: ChipThemeData(
       backgroundColor: lightInputFill,
-      selectedColor: primaryIndigo.withValues(alpha: 0.15),
-      labelStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: lightTextPrimary),
-      secondaryLabelStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: primaryIndigo),
+      selectedColor: primaryIndigo.withValues(alpha: 0.16),
+      checkmarkColor: primaryIndigo,
+      labelStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: lightTextPrimary),
+      secondaryLabelStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: primaryIndigo),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      side: BorderSide(color: lightCardBorder.withValues(alpha: 0.5)),
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      side: BorderSide(color: lightCardBorder.withValues(alpha: 0.8)),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
     ),
+
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
         backgroundColor: primaryIndigo,
@@ -294,13 +296,15 @@ class AppTheme {
     ),
     chipTheme: ChipThemeData(
       backgroundColor: darkSurface,
-      selectedColor: primaryIndigo.withValues(alpha: 0.25),
-      labelStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: darkTextPrimary),
-      secondaryLabelStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: primaryLight),
+      selectedColor: primaryIndigo.withValues(alpha: 0.28),
+      checkmarkColor: primaryLight,
+      labelStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: darkTextPrimary),
+      secondaryLabelStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: primaryLight),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      side: BorderSide(color: darkCardBorder.withValues(alpha: 0.5)),
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      side: BorderSide(color: darkCardBorder.withValues(alpha: 0.8)),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
     ),
+
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
         backgroundColor: primaryIndigo,
