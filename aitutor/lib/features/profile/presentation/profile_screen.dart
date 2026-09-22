@@ -8,6 +8,7 @@ import '../../../core/providers/app_providers.dart';
 import '../../../core/config/env_config.dart';
 import '../../../shared/models/user_profile_model.dart';
 import '../../../shared/widgets/glass_container.dart';
+import '../../ai_tutor/domain/models/tutor_mode.dart';
 
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
@@ -282,12 +283,19 @@ class ProfileScreen extends ConsumerWidget {
                       trailing: DropdownButton<String>(
                         value: tutorMode,
                         underline: const SizedBox(),
-                        items: const [
-                          DropdownMenuItem(value: 'direct', child: Text("Direct Tutor")),
-                          DropdownMenuItem(value: 'socratic', child: Text("Socratic Mode")),
-                          DropdownMenuItem(value: 'beginner', child: Text("Beginner Mode")),
-                          DropdownMenuItem(value: 'exam', child: Text("Exam Mode")),
-                        ],
+                        items: TutorMode.allModes.map((m) {
+                          return DropdownMenuItem<String>(
+                            value: m.id,
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(m.icon, size: 16, color: m.accentColor),
+                                const SizedBox(width: 8),
+                                Text(m.label),
+                              ],
+                            ),
+                          );
+                        }).toList(),
                         onChanged: (val) {
                           if (val != null) {
                             ref.read(tutorModeProvider.notifier).state = val;
