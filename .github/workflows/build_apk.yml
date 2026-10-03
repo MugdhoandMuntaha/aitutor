@@ -3,6 +3,8 @@ name: Build Android APK
 on:
   push:
     branches: [ main ]
+  pull_request:
+    branches: [ main ]
   workflow_dispatch:
 
 jobs:
@@ -13,11 +15,14 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up Java JDK 17
+      - name: Set up Java JDK 21
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
-          java-version: '17'
+          java-version: '21'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
 
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
@@ -28,11 +33,17 @@ jobs:
       - name: Create local.properties
         run: |
           echo "flutter.sdk=$FLUTTER_ROOT" > aitutor/android/local.properties
+          echo "sdk.dir=$ANDROID_HOME" >> aitutor/android/local.properties
 
       - name: Install Flutter Dependencies
         run: |
           cd aitutor
           flutter pub get
+
+      - name: Analyze Project
+        run: |
+          cd aitutor
+          flutter analyze --no-fatal-infos --no-fatal-warnings
 
       - name: Build Android Release APK
         run: |
@@ -44,3 +55,5 @@ jobs:
         with:
           name: AI_Tutor_Release_APK
           path: aitutor/build/app/outputs/flutter-apk/app-release.apk
+          if-no-files-found: error
+

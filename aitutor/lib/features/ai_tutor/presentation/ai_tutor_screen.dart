@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_markdown/flutter_markdown.dart';
+import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
+import 'package:flutter_math_fork/flutter_math.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 import '../../../core/theme/app_theme.dart';
 import '../../../core/providers/app_providers.dart';
 import '../../../shared/models/chat_message_model.dart';
+import '../../../shared/widgets/glass_container.dart';
+import 'widgets/ai_memory_modal.dart';
+import 'widgets/chat_history_modal.dart';
 
 class AITutorScreen extends ConsumerStatefulWidget {
   const AITutorScreen({super.key});
@@ -62,6 +66,24 @@ class _AITutorScreenState extends ConsumerState<AITutorScreen> {
     });
   }
 
+  void _openChatHistoryModal(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => const ChatHistoryModal(),
+    );
+  }
+
+  void _openAIMemoryModal(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => const AIMemoryModal(),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final messages = ref.watch(chatProvider);
@@ -69,6 +91,9 @@ class _AITutorScreenState extends ConsumerState<AITutorScreen> {
     final selectedCourse = ref.watch(selectedCourseProvider);
     final tutorMode = ref.watch(tutorModeProvider);
     final isVoiceEnabled = ref.watch(isVoiceEnabledProvider);
+    final sessionsNotifier = ref.watch(chatSessionsProvider.notifier);
+    final activeSession = sessionsNotifier.activeSession;
+    final memories = ref.watch(aiMemoriesProvider);
 
     _scrollToBottom();
 
@@ -76,35 +101,76 @@ class _AITutorScreenState extends ConsumerState<AITutorScreen> {
       appBar: AppBar(
         title: Row(
           children: [
-            const CircleAvatar(
-              backgroundColor: AppTheme.primaryIndigo,
-              radius: 14,
-              child: Icon(Icons.auto_awesome, color: Colors.white, size: 16),
+            Container(
+              padding: const EdgeInsets.all(6),
+              decoration: const BoxDecoration(
+                color: AppTheme.primaryIndigo,
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.auto_awesome, color: Colors.white, size: 16),
             ),
             const SizedBox(width: 10),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text("AI Academic Tutor", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                Text(
-                  selectedCourse == null ? "Searching All Knowledge Bases" : "Active Context: ${selectedCourse.code}",
-                  style: TextStyle(fontSize: 11, color: Theme.of(context).brightness == Brightness.dark ? Colors.white70 : Colors.black54),
-                ),
-              ],
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    activeSession != null ? activeSession.title : "AI Academic Tutor",
+                    style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  Text(
+                    selectedCourse == null ? "All Knowledge Bases • ${memories.where((m) => m.isEnabled).length} Memories Active" : "Context: ${selectedCourse.code}",
+                    style: TextStyle(fontSize: 11, color: Theme.of(context).brightness == Brightness.dark ? Colors.white70 : Colors.black54),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
             ),
           ],
         ),
         actions: [
+          // 1. + New Chat Button (ChatGPT / Gemini style)
+          IconButton(
+            icon: const Icon(Icons.add_comment_outlined, color: AppTheme.primaryIndigo),
+            tooltip: "Start New Chat",
+            onPressed: () {
+              ref.read(chatSessionsProvider.notifier).createNewSession();
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text("Started a fresh New Chat session!"), duration: Duration(seconds: 1)),
+              );
+            },
+          ),
+
+          // 2. Chat History Threads Button
+          IconButton(
+            icon: const Icon(Icons.forum_outlined),
+            tooltip: "Chat History Threads",
+            onPressed: () => _openChatHistoryModal(context),
+          ),
+
+          // 3. AI Memory Button (ChatGPT & Gemini style memory)
+          IconButton(
+            icon: Badge(
+              label: Text("${memories.where((m) => m.isEnabled).length}"),
+              backgroundColor: AppTheme.accentCyan,
+              child: const Icon(Icons.psychology_outlined, color: AppTheme.accentCyan),
+            ),
+            tooltip: "AI Memory & Preferences",
+            onPressed: () => _openAIMemoryModal(context),
+          ),
+
+          // 4. Voice Audio Toggle
           IconButton(
             icon: Icon(
               isVoiceEnabled ? Icons.volume_up : Icons.volume_off,
               color: isVoiceEnabled ? AppTheme.accentEmerald : Colors.grey,
             ),
-            tooltip: "Voice Speech Output (ElevenLabs)",
+            tooltip: "Voice Speech Output",
             onPressed: () {
               ref.read(isVoiceEnabledProvider.notifier).state = !isVoiceEnabled;
               ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text(isVoiceEnabled ? "Voice Output Muted" : "Voice Output Enabled (ElevenLabs AI)")),
+                SnackBar(content: Text(isVoiceEnabled ? "Voice Muted" : "ElevenLabs Voice Enabled")),
               );
             },
           ),
@@ -112,13 +178,56 @@ class _AITutorScreenState extends ConsumerState<AITutorScreen> {
       ),
       body: Column(
         children: [
-          // Filter Bar 1: Course Selector Chips
-          Container(
-            height: 48,
+          // Top Quick Actions Bar: New Chat & Memory Pills
+          Padding(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-            color: Theme.of(context).cardColor,
+            child: Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () {
+                      ref.read(chatSessionsProvider.notifier).createNewSession();
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text("Created New Chat session!"), duration: Duration(seconds: 1)),
+                      );
+                    },
+                    icon: const Icon(Icons.add, size: 16),
+                    label: const Text("+ New Chat", style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 10),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () => _openAIMemoryModal(context),
+                    icon: const Icon(Icons.psychology, size: 16, color: AppTheme.accentCyan),
+                    label: Text("🧠 Memory (${memories.where((m) => m.isEnabled).length})", style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 10),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                IconButton(
+                  icon: const Icon(Icons.history, size: 20),
+                  tooltip: "Chat History",
+                  onPressed: () => _openChatHistoryModal(context),
+                ),
+              ],
+            ),
+          ),
+
+          // Course Selector Chips
+          Container(
+            height: 44,
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
             child: ListView(
               scrollDirection: Axis.horizontal,
+              physics: const BouncingScrollPhysics(),
               children: [
                 FilterChip(
                   label: const Text("All Courses"),
@@ -138,13 +247,13 @@ class _AITutorScreenState extends ConsumerState<AITutorScreen> {
             ),
           ),
 
-          // Filter Bar 2: Tutor Mode Chips
+          // Tutor Mode Selector Chips
           Container(
-            height: 48,
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-            color: Theme.of(context).scaffoldBackgroundColor,
+            height: 44,
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
             child: ListView(
               scrollDirection: Axis.horizontal,
+              physics: const BouncingScrollPhysics(),
               children: [
                 _buildModeChip("direct", "Direct Tutor", Icons.check_circle_outline, tutorMode, ref),
                 _buildModeChip("socratic", "Socratic Mode", Icons.psychology, tutorMode, ref),
@@ -161,56 +270,70 @@ class _AITutorScreenState extends ConsumerState<AITutorScreen> {
             child: ListView.builder(
               controller: _scrollController,
               padding: const EdgeInsets.all(16),
+              physics: const BouncingScrollPhysics(),
               itemCount: messages.length,
               itemBuilder: (context, index) {
                 final msg = messages[index];
-                return _buildMessageBubble(msg);
+                return _buildGlassMessageBubble(msg);
               },
             ),
           ),
 
-          // Input Box
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: Theme.of(context).cardColor,
-              border: Border(top: BorderSide(color: Theme.of(context).dividerColor)),
-            ),
-            child: Row(
-              children: [
-                IconButton(
-                  icon: Icon(_isListening ? Icons.mic : Icons.mic_none, color: _isListening ? Colors.red : AppTheme.primaryIndigo),
-                  onPressed: _listen,
-                ),
-                Expanded(
-                  child: TextField(
-                    controller: _messageController,
-                    decoration: const InputDecoration(
-                      hintText: "Ask anything from your study materials...",
-                      border: InputBorder.none,
-                      enabledBorder: InputBorder.none,
-                      focusedBorder: InputBorder.none,
-                      filled: false,
-                    ),
-                    onSubmitted: (val) {
-                      if (val.trim().isNotEmpty) {
-                        ref.read(chatProvider.notifier).sendMessage(val.trim());
-                        _messageController.clear();
-                      }
-                    },
+          // Input Box (Glassmorphic Container pinned above navigation bar)
+          Builder(
+            builder: (context) {
+              final bottomPadding = MediaQuery.of(context).padding.bottom + 20;
+              return Padding(
+                padding: EdgeInsets.fromLTRB(12, 6, 12, bottomPadding),
+                child: GlassContainer(
+                  borderRadius: 24,
+                  blur: 20,
+                  opacity: 0.18,
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  child: Row(
+                    children: [
+                      IconButton(
+                        icon: Icon(_isListening ? Icons.mic : Icons.mic_none, color: _isListening ? Colors.red : AppTheme.primaryIndigo),
+                        onPressed: _listen,
+                      ),
+                      Expanded(
+                        child: TextField(
+                          controller: _messageController,
+                          decoration: const InputDecoration(
+                            hintText: "Ask anything from your materials or memory...",
+                            border: InputBorder.none,
+                            enabledBorder: InputBorder.none,
+                            focusedBorder: InputBorder.none,
+                            filled: false,
+                          ),
+                          onSubmitted: (val) {
+                            if (val.trim().isNotEmpty) {
+                              ref.read(chatProvider.notifier).sendMessage(val.trim());
+                              _messageController.clear();
+                            }
+                          },
+                        ),
+                      ),
+                      Container(
+                        decoration: const BoxDecoration(
+                          color: AppTheme.primaryIndigo,
+                          shape: BoxShape.circle,
+                        ),
+                        child: IconButton(
+                          icon: const Icon(Icons.send_rounded, color: Colors.white, size: 18),
+                          onPressed: () {
+                            if (_messageController.text.trim().isNotEmpty) {
+                              ref.read(chatProvider.notifier).sendMessage(_messageController.text.trim());
+                              _messageController.clear();
+                            }
+                          },
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                IconButton(
-                  icon: const Icon(Icons.send_rounded, color: AppTheme.primaryIndigo),
-                  onPressed: () {
-                    if (_messageController.text.trim().isNotEmpty) {
-                      ref.read(chatProvider.notifier).sendMessage(_messageController.text.trim());
-                      _messageController.clear();
-                    }
-                  },
-                ),
-              ],
-            ),
+              );
+            },
           ),
         ],
       ),
@@ -233,14 +356,10 @@ class _AITutorScreenState extends ConsumerState<AITutorScreen> {
     );
   }
 
-  Widget _buildMessageBubble(ChatMessage msg) {
+  Widget _buildGlassMessageBubble(ChatMessage msg) {
     final isUser = msg.isUser;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     
-    final bubbleBg = isUser 
-        ? AppTheme.primaryIndigo 
-        : Theme.of(context).cardColor;
-        
     final textColor = isUser 
         ? Colors.white 
         : (isDark ? const Color(0xFFF1F5F9) : const Color(0xFF1E293B));
@@ -252,91 +371,100 @@ class _AITutorScreenState extends ConsumerState<AITutorScreen> {
       alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
       child: Container(
         margin: const EdgeInsets.only(bottom: 16),
-        padding: const EdgeInsets.all(16),
         constraints: BoxConstraints(maxWidth: maxBubbleWidth),
-        decoration: BoxDecoration(
-          color: bubbleBg,
-          borderRadius: BorderRadius.circular(16).copyWith(
-            bottomRight: isUser ? Radius.zero : const Radius.circular(16),
-            bottomLeft: !isUser ? Radius.zero : const Radius.circular(16),
-          ),
-          border: isUser ? null : Border.all(color: Theme.of(context).dividerColor),
-          boxShadow: [
-            if (!isUser)
-              BoxShadow(
-                color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.05),
-                blurRadius: 6,
-                offset: const Offset(0, 2),
-              ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            MarkdownBody(
-              data: msg.text,
-              selectable: true,
-              styleSheet: MarkdownStyleSheet.fromTheme(Theme.of(context)).copyWith(
-                p: TextStyle(color: textColor, fontSize: 14, height: 1.5),
-                h1: TextStyle(color: textColor, fontSize: 18, fontWeight: FontWeight.bold),
-                h2: TextStyle(color: textColor, fontSize: 16, fontWeight: FontWeight.bold),
-                h3: TextStyle(color: textColor, fontSize: 15, fontWeight: FontWeight.bold),
-                listBullet: TextStyle(color: textColor),
-                tableHead: TextStyle(fontWeight: FontWeight.bold, color: textColor, fontSize: 13),
-                tableBody: TextStyle(color: textColor, fontSize: 13),
-                tableBorder: TableBorder.all(
-                  color: Theme.of(context).dividerColor,
-                  width: 1,
-                ),
-                tableCellsPadding: const EdgeInsets.all(8),
-              ),
-            ),
+        child: GlassContainer(
+          borderRadius: 20,
+          blur: 16,
+          opacity: isUser ? 0.85 : 0.18,
+          gradient: isUser
+              ? const LinearGradient(
+                  colors: [Color(0xFF6366F1), Color(0xFF4F46E5)],
+                )
+              : null,
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildFormattedMessageContent(context, msg.text, textColor),
 
-            if (!isUser && msg.citations.isNotEmpty) ...[
-              const SizedBox(height: 14),
-              Divider(color: Theme.of(context).dividerColor),
-              const Row(
+              const SizedBox(height: 8),
+
+              // Action Toolbar on Messages (Save to Memory)
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  Icon(Icons.source, size: 13, color: AppTheme.accentEmerald),
-                  SizedBox(width: 6),
-                  Text("Grounded Sources:", style: TextStyle(color: AppTheme.accentEmerald, fontWeight: FontWeight.bold, fontSize: 12)),
+                  InkWell(
+                    onTap: () {
+                      ref.read(aiMemoriesProvider.notifier).addMemory(msg.text);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text("Saved fact/preference to AI Tutor Memory! 🧠")),
+                      );
+                    },
+                    borderRadius: BorderRadius.circular(12),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.bookmark_add_outlined, size: 13, color: isUser ? Colors.white70 : AppTheme.accentCyan),
+                          const SizedBox(width: 4),
+                          Text(
+                            "Save to Memory",
+                            style: TextStyle(fontSize: 10, color: isUser ? Colors.white70 : AppTheme.accentCyan, fontWeight: FontWeight.w600),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
                 ],
               ),
-              const SizedBox(height: 8),
-              ...msg.citations.map((c) => InkWell(
-                onTap: () {
-                  _showCitationDialog(context, c);
-                },
-                child: Container(
-                  margin: const EdgeInsets.only(bottom: 6),
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).scaffoldBackgroundColor,
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: Theme.of(context).dividerColor),
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.picture_as_pdf, color: Colors.redAccent, size: 14),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          "${c.documentTitle} (Pg ${c.pageNumber})",
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            color: Theme.of(context).primaryColor,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
-                            decoration: TextDecoration.underline,
+
+              if (!isUser && msg.citations.isNotEmpty) ...[
+                const SizedBox(height: 10),
+                Divider(color: Theme.of(context).dividerColor),
+                const Row(
+                  children: [
+                    Icon(Icons.source, size: 13, color: AppTheme.accentEmerald),
+                    SizedBox(width: 6),
+                    Text("Grounded Sources:", style: TextStyle(color: AppTheme.accentEmerald, fontWeight: FontWeight.bold, fontSize: 12)),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                ...msg.citations.map((c) => InkWell(
+                  onTap: () {
+                    _showCitationDialog(context, c);
+                  },
+                  child: Container(
+                    margin: const EdgeInsets.only(bottom: 6),
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).scaffoldBackgroundColor.withValues(alpha: 0.5),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Theme.of(context).dividerColor),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.picture_as_pdf, color: Colors.redAccent, size: 14),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            "${c.documentTitle} (Pg ${c.pageNumber})",
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              color: Theme.of(context).primaryColor,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                              decoration: TextDecoration.underline,
+                            ),
                           ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
-              )),
+                )),
+              ],
             ],
-          ],
+          ),
         ),
       ),
     );
@@ -380,5 +508,143 @@ class _AITutorScreenState extends ConsumerState<AITutorScreen> {
         ],
       ),
     );
+  }
+
+  Widget _buildFormattedMessageContent(BuildContext context, String rawText, Color textColor) {
+    final RegExp blockEqRegex = RegExp(r'(\$\$[\s\S]*?\$\$|\\\[[\s\S]*?\\\])');
+    final matches = blockEqRegex.allMatches(rawText);
+
+    if (matches.isEmpty) {
+      return _buildMarkdownSegment(context, rawText, textColor);
+    }
+
+    final List<Widget> children = [];
+    int lastIndex = 0;
+
+    for (final match in matches) {
+      if (match.start > lastIndex) {
+        final textSegment = rawText.substring(lastIndex, match.start);
+        if (textSegment.trim().isNotEmpty) {
+          children.add(_buildMarkdownSegment(context, textSegment, textColor));
+        }
+      }
+
+      String eqRaw = match.group(0)!;
+      String texCode = eqRaw;
+      if (texCode.startsWith(r'$$') && texCode.endsWith(r'$$')) {
+        texCode = texCode.substring(2, texCode.length - 2).trim();
+      } else if (texCode.startsWith(r'\[') && texCode.endsWith(r'\]')) {
+        texCode = texCode.substring(2, texCode.length - 2).trim();
+      }
+
+      // Clean $1 artifacts if any exist
+      texCode = texCode.replaceAll(r'$1', '');
+
+      children.add(
+        Container(
+          width: double.infinity,
+          alignment: Alignment.center,
+          margin: const EdgeInsets.symmetric(vertical: 10),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          decoration: BoxDecoration(
+            color: Colors.black.withValues(alpha: 0.35),
+            borderRadius: BorderRadius.circular(6),
+            border: Border.all(
+              color: Colors.white,
+              width: 1.2,
+            ),
+          ),
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            physics: const BouncingScrollPhysics(),
+            child: Math.tex(
+              texCode,
+              textStyle: const TextStyle(
+                color: Colors.white,
+                fontSize: 16,
+              ),
+              onErrorFallback: (err) {
+                return Text(
+                  texCode,
+                  style: const TextStyle(color: Colors.white, fontFamily: 'monospace', fontSize: 13),
+                );
+              },
+            ),
+          ),
+        ),
+      );
+
+      lastIndex = match.end;
+    }
+
+    if (lastIndex < rawText.length) {
+      final remaining = rawText.substring(lastIndex);
+      if (remaining.trim().isNotEmpty) {
+        children.add(_buildMarkdownSegment(context, remaining, textColor));
+      }
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: children,
+    );
+  }
+
+  Widget _buildMarkdownSegment(BuildContext context, String text, Color textColor) {
+    final cleanedText = _cleanInlineMath(text);
+    return MarkdownBody(
+      data: cleanedText,
+      selectable: true,
+      styleSheet: MarkdownStyleSheet.fromTheme(Theme.of(context)).copyWith(
+        p: TextStyle(color: textColor, fontSize: 14, height: 1.5),
+        h1: TextStyle(color: textColor, fontSize: 18, fontWeight: FontWeight.bold),
+        h2: TextStyle(color: textColor, fontSize: 16, fontWeight: FontWeight.bold),
+        h3: TextStyle(color: textColor, fontSize: 15, fontWeight: FontWeight.bold),
+        listBullet: TextStyle(color: textColor),
+        tableHead: TextStyle(fontWeight: FontWeight.bold, color: textColor, fontSize: 13),
+        tableBody: TextStyle(color: textColor, fontSize: 13),
+        tableBorder: TableBorder.all(
+          color: Theme.of(context).dividerColor,
+          width: 1,
+        ),
+        tableCellsPadding: const EdgeInsets.all(8),
+      ),
+    );
+  }
+
+  String _cleanInlineMath(String text) {
+    if (text.isEmpty) return text;
+    String s = text;
+
+    // Convert single inline dollar math $eq$ into bold/clean notation
+    s = s.replaceAllMapped(RegExp(r'\$([^$\n]+)\$'), (m) {
+      String eq = m.group(1)?.trim() ?? '';
+      return '**${_cleanSimpleMath(eq)}**';
+    });
+
+    // Convert \(eq\) into bold/clean notation
+    s = s.replaceAllMapped(RegExp(r'\\\((.*?)\\\)'), (m) {
+      String eq = m.group(1)?.trim() ?? '';
+      return '**${_cleanSimpleMath(eq)}**';
+    });
+
+    return s;
+  }
+
+  String _cleanSimpleMath(String eq) {
+    String s = eq;
+    s = s.replaceAll(r'\to', '→');
+    s = s.replaceAll(r'\rightarrow', '→');
+    s = s.replaceAll(r'\approx', '≈');
+    s = s.replaceAll(r'\infty', '∞');
+    s = s.replaceAll(r'\times', '×');
+    s = s.replaceAll(r'\cdot', '·');
+    s = s.replaceAll(r'\le', '≤');
+    s = s.replaceAll(r'\ge', '≥');
+    s = s.replaceAll(r'\neq', '≠');
+    s = s.replaceAll(r'\_', '_');
+    s = s.replaceAllMapped(RegExp(r'\\text\s*\{([^}]+)\}'), (m) => m.group(1) ?? '');
+    s = s.replaceAllMapped(RegExp(r'\\([a-zA-Z]+)'), (m) => m.group(1) ?? '');
+    return s.replaceAll('{', '').replaceAll('}', '').trim();
   }
 }

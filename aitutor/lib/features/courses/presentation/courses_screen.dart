@@ -4,6 +4,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/providers/app_providers.dart';
 import '../../../shared/models/course_model.dart';
 import '../../../shared/models/document_model.dart';
+import '../../../shared/widgets/glass_container.dart';
 import '../../documents/presentation/document_upload_screen.dart';
 
 class CoursesScreen extends ConsumerWidget {
@@ -42,23 +43,27 @@ class CoursesScreen extends ConsumerWidget {
                 ],
               ),
             )
-          : Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: ListView.builder(
-                itemCount: courses.length,
-                itemBuilder: (context, index) {
-                  final course = courses[index];
-                  final courseDocs = documents.where((d) => d.courseId == course.id).toList();
+          : ListView.builder(
+              physics: const BouncingScrollPhysics(),
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 115),
+              itemCount: courses.length,
+              itemBuilder: (context, index) {
+                final course = courses[index];
+                final courseDocs = documents.where((d) => d.courseId == course.id).toList();
 
-                  return Card(
-                    margin: const EdgeInsets.only(bottom: 16),
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 16),
+                  child: GlassContainer(
+                    borderRadius: 20,
+                    blur: 16,
+                    opacity: 0.15,
                     child: ExpansionTile(
                       shape: const Border(),
                       leading: CircleAvatar(
                         backgroundColor: Color(int.parse(course.colorHex.replaceAll('#', '0xff'))),
                         child: Text(
-                          course.code.replaceAll(RegExp(r'[^A-Z]'), ''),
-                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12),
+                          course.code.replaceAll(RegExp(r'[^A-Z0-9]'), ''),
+                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 11),
                         ),
                       ),
                       title: Text("${course.code}: ${course.title}", style: const TextStyle(fontWeight: FontWeight.bold)),
@@ -114,7 +119,7 @@ class CoursesScreen extends ConsumerWidget {
                       ),
                       children: [
                         Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
@@ -151,41 +156,44 @@ class CoursesScreen extends ConsumerWidget {
                                   ),
                                 )
                               else
-                                ...courseDocs.map((doc) => ListTile(
-                                  dense: true,
-                                  leading: const Icon(Icons.picture_as_pdf, color: Colors.redAccent, size: 20),
-                                  title: Text(doc.title, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500)),
-                                  subtitle: Text("${doc.pageCount} Pages • ${doc.chunkCount} RAG Chunks"),
-                                  trailing: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      TextButton(
-                                        onPressed: () {
-                                          ref.read(selectedCourseProvider.notifier).state = course;
-                                          ScaffoldMessenger.of(context).showSnackBar(
-                                            SnackBar(content: Text("Selected ${course.title} as active context for AI Tutor")),
-                                          );
-                                        },
-                                        child: const Text("Set Context", style: TextStyle(fontSize: 11)),
-                                      ),
-                                      IconButton(
-                                        icon: const Icon(Icons.edit_outlined, size: 18, color: Colors.grey),
-                                        tooltip: "Edit Page Count & Title",
-                                        onPressed: () {
-                                          _showEditDocumentDialog(context, ref, doc);
-                                        },
-                                      ),
-                                      IconButton(
-                                        icon: const Icon(Icons.delete_outline, size: 18, color: Colors.grey),
-                                        tooltip: "Delete Document",
-                                        onPressed: () {
-                                          ref.read(documentsProvider.notifier).deleteDocument(doc.id);
-                                          ScaffoldMessenger.of(context).showSnackBar(
-                                            SnackBar(content: Text("Deleted ${doc.title}")),
-                                          );
-                                        },
-                                      ),
-                                    ],
+                                ...courseDocs.map((doc) => Material(
+                                  color: Colors.transparent,
+                                  child: ListTile(
+                                    dense: true,
+                                    leading: const Icon(Icons.picture_as_pdf, color: Colors.redAccent, size: 20),
+                                    title: Text(doc.title, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500)),
+                                    subtitle: Text("${doc.pageCount} Pages • ${doc.chunkCount} RAG Chunks"),
+                                    trailing: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        TextButton(
+                                          onPressed: () {
+                                            ref.read(selectedCourseProvider.notifier).state = course;
+                                            ScaffoldMessenger.of(context).showSnackBar(
+                                              SnackBar(content: Text("Selected ${course.title} as active context for AI Tutor")),
+                                            );
+                                          },
+                                          child: const Text("Set Context", style: TextStyle(fontSize: 11)),
+                                        ),
+                                        IconButton(
+                                          icon: const Icon(Icons.edit_outlined, size: 18, color: Colors.grey),
+                                          tooltip: "Edit Page Count & Title",
+                                          onPressed: () {
+                                            _showEditDocumentDialog(context, ref, doc);
+                                          },
+                                        ),
+                                        IconButton(
+                                          icon: const Icon(Icons.delete_outline, size: 18, color: Colors.grey),
+                                          tooltip: "Delete Document",
+                                          onPressed: () {
+                                            ref.read(documentsProvider.notifier).deleteDocument(doc.id);
+                                            ScaffoldMessenger.of(context).showSnackBar(
+                                              SnackBar(content: Text("Deleted ${doc.title}")),
+                                            );
+                                          },
+                                        ),
+                                      ],
+                                    ),
                                   ),
                                 )),
                             ],
@@ -193,9 +201,9 @@ class CoursesScreen extends ConsumerWidget {
                         ),
                       ],
                     ),
-                  );
-                },
-              ),
+                  ),
+                );
+              },
             ),
     );
   }
@@ -251,6 +259,7 @@ class CoursesScreen extends ConsumerWidget {
   void _showEditCourseDialog(BuildContext context, WidgetRef ref, CourseModel course) {
     final titleController = TextEditingController(text: course.title);
     final codeController = TextEditingController(text: course.code);
+    final masteryController = TextEditingController(text: course.masteryScore.toString());
 
     showDialog(
       context: context,
@@ -268,6 +277,12 @@ class CoursesScreen extends ConsumerWidget {
               controller: codeController,
               decoration: const InputDecoration(labelText: "Course Code"),
             ),
+            const SizedBox(height: 10),
+            TextField(
+              controller: masteryController,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(labelText: "Mastery Level (0 - 100%)"),
+            ),
           ],
         ),
         actions: [
@@ -278,9 +293,11 @@ class CoursesScreen extends ConsumerWidget {
           ElevatedButton(
             onPressed: () {
               if (titleController.text.isNotEmpty && codeController.text.isNotEmpty) {
+                final mastery = (int.tryParse(masteryController.text.trim()) ?? course.masteryScore).clamp(0, 100);
                 final updated = course.copyWith(
                   title: titleController.text.trim(),
                   code: codeController.text.trim(),
+                  masteryScore: mastery,
                 );
                 ref.read(coursesProvider.notifier).updateCourse(updated);
                 Navigator.pop(context);
