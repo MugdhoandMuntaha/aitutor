@@ -1,0 +1,1648 @@
+/* ==========================================================================
+   HARVARD UNIVERSITY SEAS - PROFESSIONAL RED & WHITE THEME
+   B.Sc. in Computer Science & Engineering - Result Publication Portal
+   ========================================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800;900&family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+
+:root {
+  /* Official Harvard Palette */
+  --harvard-crimson: #A51C30;
+  --harvard-crimson-dark: #7F1424;
+  --harvard-crimson-deep: #5C0E1A;
+  --harvard-crimson-light: #C92A3E;
+  --harvard-crimson-surface: #FDF2F4;
+  --harvard-crimson-tint: rgba(165, 28, 48, 0.08);
+  --harvard-crimson-border: rgba(165, 28, 48, 0.22);
+  --harvard-crimson-glow: rgba(165, 28, 48, 0.2);
+
+  /* Clean White Canvas */
+  --bg-page: #F8F9FA;
+  --bg-surface: #FFFFFF;
+  --bg-card: #FFFFFF;
+  --bg-input: #F8FAFC;
+  --bg-hover: #F1F5F9;
+
+  /* Typography Colors */
+  --text-main: #111827;
+  --text-secondary: #475569;
+  --text-muted: #64748B;
+  --text-light: #94A3B8;
+  --text-on-crimson: #FFFFFF;
+
+  /* Borders & Shadows */
+  --border-light: #E2E8F0;
+  --border-subtle: #EBEBEB;
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 14px rgba(0, 0, 0, 0.07);
+  --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.09);
+  --shadow-crimson: 0 4px 14px rgba(165, 28, 48, 0.18);
+
+  /* Latin Honors */
+  --gold-primary: #B45309;
+  --gold-bg: #FEF3C7;
+  --emerald-primary: #047857;
+  --emerald-bg: #D1FAE5;
+  --blue-primary: #1D4ED8;
+  --blue-bg: #DBEAFE;
+
+  /* Fonts */
+  --font-serif: 'Cinzel', Georgia, serif;
+  --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 18px;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: var(--bg-page);
+  color: var(--text-main);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+}
+
+/* ==========================================================================
+   TOP INSTITUTIONAL HEADER & NAVIGATION
+   ========================================================================== */
+.harvard-top-strip {
+  background: var(--harvard-crimson-deep);
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 0.75rem;
+  letter-spacing: 0.8px;
+  padding: 0.35rem 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  text-transform: uppercase;
+  font-weight: 600;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.site-navbar {
+  background: var(--harvard-crimson);
+  color: #FFFFFF;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.nav-container {
+  max-width: 1380px;
+  margin: 0 auto;
+  padding: 0.85rem 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+}
+
+.brand-section {
+  display: flex;
+  align-items: center;
+  gap: 1.1rem;
+  cursor: pointer;
+  text-decoration: none;
+  color: #FFFFFF;
+}
+
+.harvard-shield-crest {
+  width: 44px;
+  height: 52px;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.25));
+}
+
+.brand-titles h1 {
+  font-family: var(--font-serif);
+  font-size: 1.25rem;
+  font-weight: 800;
+  letter-spacing: 1.2px;
+  line-height: 1.1;
+  color: #FFFFFF;
+}
+
+.brand-titles p {
+  font-size: 0.78rem;
+  color: rgba(255, 255, 255, 0.9);
+  font-weight: 500;
+  letter-spacing: 0.3px;
+}
+
+.nav-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+}
+
+/* Mode Switcher (Student vs Admin) */
+.role-tabs-bar {
+  display: flex;
+  background: rgba(0, 0, 0, 0.22);
+  padding: 4px;
+  border-radius: 30px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.role-tab-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.45rem 1.1rem;
+  border: none;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.85);
+  font-family: var(--font-sans);
+  font-size: 0.82rem;
+  font-weight: 700;
+  border-radius: 24px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.role-tab-btn:hover {
+  color: #FFFFFF;
+}
+
+.role-tab-btn.active {
+  background: #FFFFFF;
+  color: var(--harvard-crimson);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.btn-nav-outline {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.5rem 1rem;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  color: #FFFFFF;
+  font-size: 0.82rem;
+  font-weight: 600;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-nav-outline:hover {
+  background: #FFFFFF;
+  color: var(--harvard-crimson);
+}
+
+/* ==========================================================================
+   CORE LAYOUT
+   ========================================================================== */
+.main-content-shell {
+  max-width: 1380px;
+  margin: 1.75rem auto 3.5rem;
+  padding: 0 1.5rem;
+}
+
+/* White University Cards */
+.univ-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  padding: 1.75rem;
+  margin-bottom: 1.75rem;
+}
+
+/* Search & Selector Ribbon */
+.student-lookup-ribbon {
+  background: #FFFFFF;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg);
+  padding: 1.25rem 1.5rem;
+  margin-bottom: 1.5rem;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+@media (min-width: 992px) {
+  .student-lookup-ribbon {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+}
+
+.search-input-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1;
+  max-width: 480px;
+}
+
+.search-input-box {
+  width: 100%;
+  padding: 0.65rem 1rem;
+  background: var(--bg-input);
+  border: 1.5px solid var(--border-light);
+  border-radius: var(--radius-md);
+  font-family: var(--font-mono);
+  font-size: 0.88rem;
+  color: var(--text-main);
+  transition: border-color 0.2s;
+}
+
+.search-input-box:focus {
+  outline: none;
+  border-color: var(--harvard-crimson);
+  background: #FFFFFF;
+}
+
+.btn-harvard {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.65rem 1.35rem;
+  background: var(--harvard-crimson);
+  color: #FFFFFF;
+  border: none;
+  border-radius: var(--radius-md);
+  font-weight: 700;
+  font-size: 0.85rem;
+  cursor: pointer;
+  box-shadow: var(--shadow-crimson);
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.btn-harvard:hover {
+  background: var(--harvard-crimson-dark);
+  transform: translateY(-1px);
+}
+
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.6rem 1.1rem;
+  background: #FFFFFF;
+  color: var(--text-main);
+  border: 1.5px solid var(--border-light);
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  font-size: 0.84rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-secondary:hover {
+  background: var(--bg-hover);
+  border-color: #CBD5E1;
+}
+
+.demo-chips-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.demo-chip-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 5px 12px;
+  background: #FFFFFF;
+  border: 1px solid var(--border-light);
+  border-radius: 20px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.demo-chip-pill img {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.demo-chip-pill:hover, .demo-chip-pill.active {
+  background: var(--harvard-crimson-surface);
+  border-color: var(--harvard-crimson);
+  color: var(--harvard-crimson);
+}
+
+/* ==========================================================================
+   STUDENT PROFILE HERO CARD
+   ========================================================================== */
+.student-profile-hero {
+  background: #FFFFFF;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-xl);
+  padding: 2rem;
+  box-shadow: var(--shadow-md);
+  margin-bottom: 2rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.student-profile-hero::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 6px;
+  background: var(--harvard-crimson);
+}
+
+.hero-layout-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2rem;
+}
+
+@media (min-width: 992px) {
+  .hero-layout-grid {
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+  }
+}
+
+.hero-avatar-box {
+  width: 110px;
+  height: 110px;
+  border-radius: 20px;
+  border: 3px solid #FFFFFF;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+  overflow: hidden;
+  background: var(--harvard-crimson-surface);
+  position: relative;
+}
+
+.profile-avatar-interactive {
+  cursor: pointer;
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s ease;
+}
+
+.profile-avatar-interactive:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(165, 28, 48, 0.28);
+}
+
+.avatar-edit-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.72);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  color: #FFFFFF;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  border-radius: inherit;
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  backdrop-filter: blur(2px);
+}
+
+.profile-avatar-interactive:hover .avatar-edit-overlay {
+  opacity: 1;
+}
+
+.btn-change-avatar {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 4px 10px;
+  background: #FFFFFF;
+  border: 1px solid var(--border-light);
+  border-radius: 14px;
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  margin-top: 6px;
+}
+
+.btn-change-avatar:hover {
+  background: var(--harvard-crimson-surface);
+  border-color: var(--harvard-crimson);
+  color: var(--harvard-crimson);
+}
+
+.hero-avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.student-main-info h2 {
+  font-family: var(--font-serif);
+  font-size: 1.85rem;
+  font-weight: 800;
+  color: var(--text-main);
+  letter-spacing: 0.5px;
+  margin-bottom: 0.25rem;
+}
+
+.degree-subtext {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--harvard-crimson);
+  margin-bottom: 0.85rem;
+}
+
+.info-pills-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.info-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 5px 10px;
+  background: var(--bg-page);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.info-pill strong {
+  color: var(--text-main);
+  font-family: var(--font-mono);
+}
+
+/* CGPA Large Score Box */
+.cgpa-highlight-card {
+  background: var(--harvard-crimson-surface);
+  border: 2px solid var(--harvard-crimson-border);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem 2rem;
+  text-align: center;
+  min-width: 230px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.cgpa-metric-title {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--harvard-crimson-dark);
+  font-weight: 800;
+}
+
+.cgpa-big-number {
+  font-family: var(--font-serif);
+  font-size: 3.25rem;
+  font-weight: 900;
+  color: var(--harvard-crimson);
+  line-height: 1;
+  margin: 0.35rem 0;
+}
+
+.cgpa-scale-max {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin-bottom: 0.75rem;
+  font-weight: 600;
+}
+
+/* Honors Badges */
+.honors-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+}
+
+.badge-summa { background: var(--gold-bg); color: var(--gold-primary); border: 1px solid #FCD34D; }
+.badge-magna { background: var(--blue-bg); color: var(--blue-primary); border: 1px solid #BFDBFE; }
+.badge-cumlaude { background: var(--emerald-bg); color: var(--emerald-primary); border: 1px solid #A7F3D0; }
+.badge-honors { background: #F1F5F9; color: #475569; border: 1px solid #CBD5E1; }
+.badge-regular { background: #F8FAFC; color: #64748B; border: 1px solid #E2E8F0; }
+.badge-warning { background: #FEF2F2; color: #DC2626; border: 1px solid #FECACA; }
+
+/* Degree Progress Track */
+.degree-progress-block {
+  margin-top: 1.5rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--border-light);
+}
+
+.progress-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.84rem;
+  color: var(--text-secondary);
+  margin-bottom: 0.5rem;
+}
+
+.progress-bar-track {
+  height: 10px;
+  background: #E2E8F0;
+  border-radius: 20px;
+  overflow: hidden;
+}
+
+.progress-bar-crimson-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--harvard-crimson) 0%, #E11D48 100%);
+  border-radius: 20px;
+  transition: width 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* ==========================================================================
+   ANALYTICS GRIDS & PROGRESSION CHARTS
+   ========================================================================== */
+.analytics-two-col {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+@media (min-width: 992px) {
+  .analytics-two-col {
+    grid-template-columns: 2fr 1fr;
+  }
+}
+
+.card-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.25rem;
+  border-bottom: 1.5px solid var(--border-light);
+  padding-bottom: 0.75rem;
+}
+
+.card-title-row h3 {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text-main);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.chart-wrapper-box {
+  width: 100%;
+  height: 200px;
+}
+
+/* Grade Distribution Bars */
+.grade-item-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.82rem;
+  margin-bottom: 0.65rem;
+}
+
+.grade-tag-label {
+  width: 32px;
+  font-family: var(--font-mono);
+  font-weight: 800;
+  color: var(--harvard-crimson);
+}
+
+.grade-track {
+  flex: 1;
+  height: 8px;
+  background: var(--bg-page);
+  border-radius: 4px;
+  overflow: hidden;
+  border: 1px solid var(--border-light);
+}
+
+.grade-fill {
+  height: 100%;
+  background: var(--harvard-crimson);
+  border-radius: 4px;
+  transition: width 0.5s ease;
+}
+
+.grade-count-number {
+  width: 25px;
+  text-align: right;
+  font-family: var(--font-mono);
+  color: var(--text-muted);
+}
+
+/* ==========================================================================
+   SEMESTER TRANSCRIPT RESULTS SECTION
+   ========================================================================== */
+.results-card {
+  background: #FFFFFF;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-xl);
+  padding: 1.75rem;
+  box-shadow: var(--shadow-md);
+  margin-bottom: 2rem;
+}
+
+.semester-tabs-container {
+  display: flex;
+  gap: 0.4rem;
+  overflow-x: auto;
+  padding-bottom: 0.75rem;
+  margin-bottom: 1.25rem;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.sem-pill-btn {
+  padding: 0.45rem 1rem;
+  background: var(--bg-page);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  color: var(--text-secondary);
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s;
+}
+
+.sem-pill-btn:hover {
+  background: #E2E8F0;
+  color: var(--text-main);
+}
+
+.sem-pill-btn.active {
+  background: var(--harvard-crimson);
+  color: #FFFFFF;
+  border-color: var(--harvard-crimson);
+  box-shadow: 0 2px 6px rgba(165, 28, 48, 0.25);
+}
+
+/* Official Publication Banner */
+.official-publish-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #F0FDF4;
+  border: 1.5px solid #BBF7D0;
+  border-radius: var(--radius-md);
+  padding: 0.75rem 1.25rem;
+  margin-bottom: 1.5rem;
+  font-size: 0.85rem;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.pub-badge-left {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  color: #166534;
+  font-weight: 600;
+}
+
+.pub-hash-right {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: #475569;
+}
+
+/* Data Table */
+.data-table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+  border: 1.5px solid var(--border-light);
+  border-radius: var(--radius-md);
+  margin-bottom: 1.5rem;
+}
+
+.academic-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+  background: #FFFFFF;
+}
+
+.academic-table th {
+  background: #F8FAFC;
+  padding: 0.85rem 1rem;
+  font-size: 0.74rem;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--text-secondary);
+  font-weight: 800;
+  border-bottom: 1.5px solid var(--border-light);
+  text-align: left;
+}
+
+.academic-table td {
+  padding: 0.95rem 1rem;
+  border-bottom: 1px solid var(--border-light);
+  color: var(--text-main);
+}
+
+.academic-table tr:hover td {
+  background: #FBFBFA;
+}
+
+.code-badge {
+  font-family: var(--font-mono);
+  font-weight: 800;
+  color: var(--harvard-crimson);
+}
+
+.grade-badge-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 38px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-family: var(--font-mono);
+  font-weight: 800;
+  font-size: 0.85rem;
+  background: var(--harvard-crimson);
+  color: #FFFFFF;
+}
+
+/* Semester Summary Strip */
+.sem-summary-strip {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1rem;
+  padding: 1.25rem;
+  background: var(--harvard-crimson-surface);
+  border: 1px solid var(--harvard-crimson-border);
+  border-radius: var(--radius-md);
+}
+
+.metric-cell {
+  display: flex;
+  flex-direction: column;
+}
+
+.metric-cell-title {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  color: var(--harvard-crimson-dark);
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+.metric-cell-value {
+  font-size: 1.45rem;
+  font-weight: 800;
+  font-family: var(--font-serif);
+  color: var(--text-main);
+}
+
+.metric-cell-value.crimson {
+  color: var(--harvard-crimson);
+}
+
+/* ==========================================================================
+   WHAT-IF GPA SIMULATOR
+   ========================================================================== */
+.simulator-box {
+  background: #FFFFFF;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg);
+  padding: 1.75rem;
+  box-shadow: var(--shadow-sm);
+  margin-bottom: 2rem;
+}
+
+.sim-two-col {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+  margin-top: 1.25rem;
+}
+
+@media (min-width: 850px) {
+  .sim-two-col {
+    grid-template-columns: 2fr 1fr;
+  }
+}
+
+.sim-input-row {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr auto;
+  gap: 0.75rem;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.sim-form-input {
+  padding: 0.55rem 0.85rem;
+  background: var(--bg-input);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+  color: var(--text-main);
+}
+
+.sim-form-input:focus {
+  outline: none;
+  border-color: var(--harvard-crimson);
+  background: #FFFFFF;
+}
+
+.sim-result-card {
+  background: var(--harvard-crimson-surface);
+  border: 2px solid var(--harvard-crimson-border);
+  border-radius: var(--radius-md);
+  padding: 1.5rem;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+/* ==========================================================================
+   ADMIN PANEL STYLES
+   ========================================================================== */
+.admin-header-strip {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+@media (min-width: 850px) {
+  .admin-header-strip {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+}
+
+.kpi-metrics-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 1.25rem;
+  margin-bottom: 2rem;
+}
+
+.kpi-tile {
+  background: #FFFFFF;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg);
+  padding: 1.25rem 1.5rem;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.kpi-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--harvard-crimson-surface);
+  color: var(--harvard-crimson);
+}
+
+.admin-subnav-pills {
+  display: flex;
+  gap: 0.5rem;
+  border-bottom: 1.5px solid var(--border-light);
+  margin-bottom: 1.5rem;
+  overflow-x: auto;
+}
+
+.admin-subnav-pill {
+  padding: 0.65rem 1.25rem;
+  background: transparent;
+  border: none;
+  border-bottom: 2.5px solid transparent;
+  color: var(--text-secondary);
+  font-size: 0.88rem;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.admin-subnav-pill.active {
+  color: var(--harvard-crimson);
+  border-bottom-color: var(--harvard-crimson);
+}
+
+/* Toggle Switch */
+.toggle-switch-wrapper {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.switch-input {
+  position: relative;
+  display: inline-block;
+  width: 44px;
+  height: 24px;
+}
+
+.switch-input input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.switch-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #CBD5E1;
+  transition: .25s;
+  border-radius: 24px;
+}
+
+.switch-slider:before {
+  position: absolute;
+  content: "";
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: .25s;
+  border-radius: 50%;
+}
+
+input:checked + .switch-slider {
+  background-color: var(--emerald-primary);
+}
+
+input:checked + .switch-slider:before {
+  transform: translateX(20px);
+}
+
+/* ==========================================================================
+   OFFICIAL TRANSCRIPT MODAL & PRINT STYLES
+   ========================================================================== */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(17, 24, 39, 0.75);
+  backdrop-filter: blur(4px);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+}
+
+.transcript-modal-container {
+  background: #FFFFFF;
+  border-radius: var(--radius-md);
+  width: 100%;
+  max-width: 900px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  position: relative;
+}
+
+.transcript-paper-document {
+  padding: 3rem;
+  background: #FFFFFF;
+  color: #111827;
+  font-family: 'Times New Roman', Times, serif;
+}
+
+.transcript-uni-header {
+  text-align: center;
+  border-bottom: 2.5px solid var(--harvard-crimson);
+  padding-bottom: 1.25rem;
+  margin-bottom: 1.75rem;
+}
+
+.transcript-crest-logo {
+  width: 58px;
+  height: 68px;
+  margin: 0 auto 0.5rem;
+}
+
+.t-school-name {
+  font-family: var(--font-serif);
+  font-size: 1.65rem;
+  font-weight: 800;
+  color: var(--harvard-crimson);
+  letter-spacing: 1.5px;
+}
+
+.t-division-name {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #334155;
+  margin-top: 2px;
+}
+
+.t-title-tag {
+  font-size: 0.85rem;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: #64748B;
+  margin-top: 4px;
+}
+
+.t-data-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  gap: 1.5rem;
+  align-items: center;
+  font-size: 0.88rem;
+  margin-bottom: 1.5rem;
+  border-bottom: 1px solid #E2E8F0;
+  padding-bottom: 1rem;
+}
+
+.t-term-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.84rem;
+  margin-bottom: 1.5rem;
+}
+
+.t-term-table th {
+  border-top: 1.5px solid #111827;
+  border-bottom: 1.5px solid #111827;
+  padding: 5px 8px;
+  text-align: left;
+  font-weight: 700;
+  font-size: 0.74rem;
+  text-transform: uppercase;
+}
+
+.t-term-table td {
+  padding: 5px 8px;
+  border-bottom: 1px solid #E2E8F0;
+}
+
+.transcript-signatures-box {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-top: 2.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #CBD5E1;
+}
+
+/* ==========================================================================
+   AUTH GATEWAY & PORTAL SELECTION (STUDENT VIEW / ADMIN VIEW)
+   ========================================================================== */
+.auth-gateway-page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--bg-page);
+}
+
+.auth-hero-banner {
+  background: linear-gradient(135deg, var(--harvard-crimson-deep) 0%, var(--harvard-crimson) 100%);
+  color: #FFFFFF;
+  padding: 3rem 1.5rem 3.5rem;
+  border-bottom: 4px solid #C49A45;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+.auth-hero-content {
+  max-width: 1100px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+}
+
+.auth-hero-logo {
+  width: 90px;
+  height: 90px;
+  object-fit: contain;
+  background: #FFFFFF;
+  border-radius: var(--radius-md);
+  padding: 6px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
+  flex-shrink: 0;
+}
+
+.auth-institution-tag {
+  display: inline-block;
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  color: #FDE68A;
+  margin-bottom: 0.35rem;
+  text-transform: uppercase;
+}
+
+.auth-hero-title {
+  font-family: var(--font-serif);
+  font-size: 2.2rem;
+  font-weight: 900;
+  letter-spacing: 2px;
+  line-height: 1.1;
+  margin-bottom: 0.4rem;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.auth-hero-subtitle {
+  font-size: 0.95rem;
+  color: rgba(255, 255, 255, 0.92);
+  margin-bottom: 1rem;
+}
+
+.auth-badge-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.auth-pill {
+  display: inline-block;
+  font-size: 0.74rem;
+  font-weight: 600;
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  color: #FFFFFF;
+}
+
+.auth-portal-container {
+  max-width: 1180px;
+  width: 100%;
+  margin: -2rem auto 3rem;
+  padding: 0 1.5rem;
+  flex: 1;
+}
+
+.auth-portal-intro {
+  background: #FFFFFF;
+  border-radius: var(--radius-lg);
+  padding: 1.25rem 2rem;
+  margin-bottom: 2rem;
+  border: 1px solid var(--border-light);
+  box-shadow: var(--shadow-sm);
+  text-align: center;
+}
+
+.auth-portal-intro h2 {
+  font-family: var(--font-serif);
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: var(--harvard-crimson);
+  margin-bottom: 0.35rem;
+}
+
+.auth-portal-intro p {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  max-width: 780px;
+  margin: 0 auto;
+}
+
+.auth-portal-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2rem;
+  margin-bottom: 2.5rem;
+}
+
+@media (min-width: 900px) {
+  .auth-portal-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.auth-portal-card {
+  background: #FFFFFF;
+  border-radius: var(--radius-xl);
+  border: 1.5px solid var(--border-light);
+  box-shadow: var(--shadow-md);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.auth-portal-card:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-lg);
+}
+
+.student-card {
+  border-top: 5px solid #059669;
+}
+
+.admin-card {
+  border-top: 5px solid var(--harvard-crimson);
+}
+
+.auth-card-header {
+  padding: 2rem 2rem 1.25rem;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.auth-card-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.8px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  margin-bottom: 0.85rem;
+  text-transform: uppercase;
+}
+
+.student-badge {
+  background: #ECFDF5;
+  color: #065F46;
+  border: 1px solid #A7F3D0;
+}
+
+.admin-badge {
+  background: var(--harvard-crimson-surface);
+  color: var(--harvard-crimson);
+  border: 1px solid var(--harvard-crimson-border);
+}
+
+.auth-card-title {
+  font-family: var(--font-serif);
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--text-main);
+  margin-bottom: 0.5rem;
+}
+
+.auth-card-desc {
+  font-size: 0.86rem;
+  color: var(--text-secondary);
+  line-height: 1.55;
+}
+
+.auth-card-body {
+  padding: 1.75rem 2rem;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.auth-field-label {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  margin-bottom: 0.4rem;
+}
+
+.auth-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.auth-input-icon {
+  position: absolute;
+  left: 12px;
+  color: var(--text-muted);
+  pointer-events: none;
+}
+
+.auth-input-field {
+  width: 100%;
+  padding: 0.7rem 0.85rem 0.7rem 2.4rem;
+  border: 1.5px solid var(--border-light);
+  border-radius: var(--radius-md);
+  font-family: var(--font-sans);
+  font-size: 0.88rem;
+  color: var(--text-main);
+  background: #FFFFFF;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.auth-input-field:focus {
+  outline: none;
+  border-color: var(--harvard-crimson);
+  box-shadow: 0 0 0 3px rgba(165, 28, 48, 0.12);
+}
+
+.btn-harvard-full {
+  width: 100%;
+  padding: 0.8rem 1.25rem;
+  background: var(--harvard-crimson);
+  color: #FFFFFF;
+  border: none;
+  border-radius: var(--radius-md);
+  font-family: var(--font-sans);
+  font-size: 0.88rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  transition: background 0.15s, transform 0.1s;
+}
+
+.btn-harvard-full:hover {
+  background: var(--harvard-crimson-dark);
+}
+
+.btn-admin-submit {
+  width: 100%;
+  padding: 0.85rem 1.25rem;
+  background: linear-gradient(135deg, var(--harvard-crimson-deep) 0%, var(--harvard-crimson) 100%);
+  color: #FFFFFF;
+  border: 1px solid #7F1424;
+  border-radius: var(--radius-md);
+  font-family: var(--font-sans);
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  box-shadow: 0 2px 6px rgba(165, 28, 48, 0.25);
+  transition: all 0.15s;
+}
+
+.btn-admin-submit:hover:not(:disabled) {
+  filter: brightness(1.1);
+  transform: translateY(-1px);
+}
+
+.btn-admin-submit:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.btn-outline-student {
+  width: 100%;
+  padding: 0.7rem 1.25rem;
+  background: #FFFFFF;
+  color: var(--harvard-crimson);
+  border: 1.5px solid var(--harvard-crimson);
+  border-radius: var(--radius-md);
+  font-family: var(--font-sans);
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.btn-outline-student:hover {
+  background: var(--harvard-crimson-surface);
+}
+
+.auth-demo-hint {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 0.6rem;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.btn-link-demo {
+  background: none;
+  border: none;
+  color: var(--harvard-crimson);
+  font-weight: 700;
+  cursor: pointer;
+  text-decoration: underline;
+  font-size: 0.75rem;
+}
+
+.btn-link-demo:hover {
+  color: var(--harvard-crimson-dark);
+}
+
+.auth-toggle-section {
+  margin-top: auto;
+  padding-top: 1.25rem;
+}
+
+.auth-toggle-btn {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0;
+}
+
+.auth-toggle-btn:hover {
+  color: var(--harvard-crimson);
+}
+
+.auth-nested-form {
+  margin-top: 1rem;
+  background: var(--bg-page);
+  padding: 1.15rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-light);
+}
+
+.auth-subtabs {
+  display: flex;
+  background: #FFFFFF;
+  border-radius: var(--radius-sm);
+  padding: 3px;
+  border: 1px solid var(--border-light);
+  margin-bottom: 1rem;
+}
+
+.auth-subtab-btn {
+  flex: 1;
+  padding: 6px;
+  border: none;
+  background: transparent;
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.auth-subtab-btn.active {
+  background: var(--harvard-crimson);
+  color: #FFFFFF;
+}
+
+.auth-field-group {
+  margin-bottom: 0.75rem;
+}
+
+.auth-error-banner {
+  background: #FEF2F2;
+  border: 1px solid #FECACA;
+  color: #DC2626;
+  padding: 0.65rem 0.85rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.78rem;
+  font-weight: 600;
+  margin-bottom: 0.85rem;
+}
+
+.auth-card-footer {
+  background: var(--bg-page);
+  padding: 0.85rem 2rem;
+  border-top: 1px solid var(--border-light);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.admin-footer {
+  background: #FFFBEB;
+  color: #92400E;
+  border-top-color: #FDE68A;
+}
+
+.auth-admin-active-box {
+  background: var(--harvard-crimson-surface);
+  border: 1.5px solid var(--harvard-crimson-border);
+  border-radius: var(--radius-md);
+  padding: 1.5rem;
+  text-align: center;
+}
+
+.auth-active-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: #FFFFFF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 0.75rem;
+  box-shadow: var(--shadow-sm);
+}
+
+.auth-academic-banner {
+  background: #FFFFFF;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem 2rem;
+  box-shadow: var(--shadow-sm);
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+}
+
+@media (min-width: 768px) {
+  .auth-academic-banner {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.auth-banner-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.auth-banner-item strong {
+  font-size: 0.82rem;
+  color: var(--harvard-crimson);
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+}
+
+.auth-banner-item span {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+/* ==========================================================================
+   PRINT MEDIA RULES
+   ========================================================================== */
+@media print {
+  @page {
+    size: letter portrait;
+    margin: 12mm 12mm 12mm 12mm;
+  }
+
+  body {
+    background: #FFFFFF !important;
+    color: #000000 !important;
+    font-size: 10pt;
+  }
+
+  .harvard-top-strip,
+  .site-navbar,
+  .student-lookup-ribbon,
+  .role-tabs-bar,
+  .btn-harvard,
+  .btn-secondary,
+  .btn-nav-outline,
+  .simulator-box,
+  .analytics-two-col,
+  .semester-tabs-container,
+  .modal-top-bar,
+  #toast-container {
+    display: none !important;
+  }
+
+  .modal-overlay {
+    position: static !important;
+    background: transparent !important;
+    padding: 0 !important;
+  }
+
+  .transcript-modal-container {
+    max-width: 100% !important;
+    box-shadow: none !important;
+    border: none !important;
+  }
+
+  .transcript-paper-document {
+    padding: 0 !important;
+  }
+
+  .t-term-table tr {
+    page-break-inside: avoid;
+  }
+}
